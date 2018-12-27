@@ -1,0 +1,6 @@
+.idea
+build
+dist
+nicetable.egg-info
+nicetable/__pycache__/
+venv
