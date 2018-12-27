@@ -3,24 +3,19 @@ import json
 from nicetable import NiceTable
 # from __future__ import annotations   # only for Python 3.7 and up?
 
-out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])
-for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print(out)
-
-
-out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='md')
-for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print(f'-- md format --\n{out}')
-out.layout = 'csv'
-out.value_sep = '|'
-print(f'-- CSV with a pipe separator --\n{out}')
-
 out = NiceTable(['Layout','Description'])
 for layout in NiceTable.builtin_layouts():
     out.append(layout)
 print (out)
+
+out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='default')
+for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
+print('-- default format --\n\n{}'.format(out))
+out.layout = 'csv'
+out.value_sep = '|'
+print('-- CSV with a pipe separator --\n\n{}'.format(out))
+
 
 
 # REMOVE ME

@@ -7,81 +7,22 @@
 Typical usage includes:
 1. Import it  
 `from nicetable import NiceTable`
+
 2. Create a `NiceTable` object, passing a `List`of column names to the constructor.  
 You can optionally pick a table layout, or override any formatting option (see below).  
-`out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])`    
-`out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='csv')`   
-`out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='csv', header=False)`   
+`out = NiceTable(['Part ID','Weight(kg)'])`  
+`out = NiceTable(['Part ID','Weight(kg)'], layout='grep')`  
+`out = NiceTable(['Part ID','Weight(kg)'], layout='csv', header=False)`  
+
 3. Append new rows by calling `append()`, passing a `List` of values.  
 `out.append(['Someone','Human',177,81])`
-4. Print the variable
+
+4. Print the variable  
 `print(out)`
 
 #### Quick example
-This example includes the four steps discussed above.  
-The example uses the builtin `NiceTable.SAMPLE_JSON`, which returns a string with a sample JSON data.
-It iterates a list of dictionaries, cherry-picking some values into the table columns:
-````python
-import json
-from nicetable import NiceTable
-
-out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])
-for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print(out)
-````
-**Output**
-````
-+-------------+----------------+--------------+--------------+
-|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
-+-------------+----------------+--------------+--------------+
-|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
-|  Pikachu    |  Electric      |          40  |       6.100  |
-|  Mewtwo     |  Psychic       |         200  |     122.000  |
-+-------------+----------------+--------------+--------------+
-````
-Note that by default, strings are aligned to the left, and numbers are aligned to the right (`auto` adjustment).  
-Also, all the numbers in each column are automatically printed with the same number of fractional digits, 
-so they nicely align. For example, the last column includes two `float` values (6.901, 6.1) and an `int` value, all aligned nicely.. 
-
-#### Layouts and formatting settings
-If needed, you pass a different table layout to the constructor, with the `layout=` parameter.  
-In addition, you can change the layout or override any other formatting settings at any time, if needed.  
-Internally, `append()` stores the values as-is. The values are converted to strings only when the table is printed.  
-
-Next, we will create a `NiceTable` with the `md` layout(Markdown format), populate it and print it.
-Than, we will switch the layout to `csv`, change a setting (replace the separator from `,` to `|`), and print it again.
-````python
-import json
-from nicetable import NiceTable
-
-out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='md')
-for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print(f'-- md format --\n{out}')
-out.layout = 'csv'
-out.value_sep = '|'
-print(f'-- CSV with a pipe separator --\n{out}')
-
-````
-**Output**
-````
--- md format --
-|-------------|----------------|--------------|--------------|
-|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
-|-------------|----------------|--------------|--------------|
-|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
-|  Pikachu    |  Electric      |          40  |       6.100  |
-|  Mewtwo     |  Psychic       |         200  |     122.000  |
-
--- CSV with a pipe separator --
-Name|Type|Height(cm)|Weight(kg)
-Bulbasaur|Grass/Poison|70 |6.901
-Pikachu|Electric|40 |6.1
-Mewtwo|Psychic|200|122
-````
-## Bulit-in layouts
-Calling `NiceTable.supported_layouts()` returns a list of all builtin layouts and their description. You can use `NiceTable` to format it...
+The class function `NiceTable.supported_layouts()` returns a `List` of all builtin layouts and their description.  
+The example uses `NiceTable` to format that list, using the default table layout:
 ````python
 from nicetable import NiceTable
 
@@ -102,12 +43,54 @@ print (out)
 |  tsv      |  tab-separated values with a one-line header.                                                        |
 +-----------+------------------------------------------------------------------------------------------------------+
 ````
-See also Formatting settings below to further customize the layout.
+See also "Formatting settings" below on how to further customize the layout.
+
+#### Layouts and formatting settings
+You can set the table layout in the constructor, with the `layout=` parameter.  
+In addition, you can change the layout or override any other formatting settings at any time, if needed.  
+Internally, `append()` stores the values as-is. The values are converted to strings only when the table is printed.  
+
+The next example uses the builtin `NiceTable.SAMPLE_JSON`, which returns some sample JSON data.
+The code loops over a list of dictionaries, cherry-picking some values into the table columns.
+It prints the table, than changes the layout to `csv` and overrides a formatting option
+(changes the separator from `,` to `|`) before printing it again.
+````python
+out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='default')
+for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
+print('-- default format --\n\n{}'.format(out))
+out.layout = 'csv'
+out.value_sep = '|'
+print('-- CSV with a pipe separator --\n\n{}'.format(out))
+`````
+Output:
+````
+-- default format --
+
++-------------+----------------+--------------+--------------+
+|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
++-------------+----------------+--------------+--------------+
+|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
+|  Pikachu    |  Electric      |          40  |       6.100  |
+|  Mewtwo     |  Psychic       |         200  |     122.000  |
++-------------+----------------+--------------+--------------+
+
+-- CSV with a pipe separator --
+
+Name|Type|Height(cm)|Weight(kg)
+Bulbasaur|Grass/Poison|70|6.901
+Pikachu|Electric|40|6.1
+Mewtwo|Psychic|200|122
+````
+Note that the `default` layout uses `auto` value adjustment:
+1. Strings are aligned to the left, numbers are aligned to the right.
+2. In each column, numbers are printed with the same number of fractional digits, so they nicely align.  
+For example, the last column input is 6.901, 6.1 (`float`) and 122 (`int`), all printed well-aligned.
+
 ## Other options
+get_column(...)  <-- get a `List` of values
 
-get_column(...)
-
-**exceptions**
+*exceptions*
 one of each like
 
 out.format('colorful rainbow')
@@ -115,20 +98,8 @@ out.append(1231)
 out.set_col... (index out of bound)
 
 
-
 ## Formatting settings
-
 
 `out.header = False`  
 `out.set_col_adjust('Type','center')`   *(set a column property by name)*  
 `out.set_col_adjust(1,'center')`   *(set a column property by position)* 
-
-
-
-
-
-## additional variations
-
-like getting a column as list
-
-
