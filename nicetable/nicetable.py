@@ -149,7 +149,7 @@ class NiceTable:
         self.header = False
 
     def _layout_as_md(self) -> None:
-        """for tables inside Markmown(.md) files. Uses the GFM table extension. Ex: README.md on github."""
+        """for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github."""
         # https://github.github.com/gfm/#tables-extension-
         # TODO (md layout) left align the values, use header marker for alignment (:--- :--: ---:)
         self.sepline_sep = '|'
@@ -264,10 +264,9 @@ class NiceTable:
 
 
 # GENERAL
-# TODO import table directly from dictionary
-# TODO import table directly from JSON
+# TODO import table directly from dictionary / JSON
 # TODO integrate with SQL result set
-# TODO unittests (!) from examples
+# TODO generate unittests (!) from commented examples
 # TODO make a class for layout functions with __category__ , __url__ in the constructor?
 # FORMATTING
 # TODO custom value wrapper "", def. value for None
@@ -275,6 +274,5 @@ class NiceTable:
 # TODO (idea) ASCII color for headers
 # PACKAGING / PUBLISHING
 # TODO finish readme
-# TODO upload to github
 # TODO publish it to test
 # TODO publish it (final)

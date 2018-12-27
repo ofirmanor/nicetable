@@ -6,15 +6,17 @@ from nicetable import NiceTable
 out = NiceTable(['Layout','Description'])
 for layout in NiceTable.builtin_layouts():
     out.append(layout)
-print (out)
+print(out)
 
 out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='default')
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print('-- default format --\n\n{}'.format(out))
+print('-- default format --\n')
+print(out)
 out.layout = 'csv'
 out.value_sep = '|'
-print('-- CSV with a pipe separator --\n\n{}'.format(out))
+print('-- CSV with a pipe separator --\n')
+print(out)
 
 
 

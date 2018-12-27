@@ -5,19 +5,20 @@
 
 ## Basics
 Typical usage includes:
-1. Import it  
+1. Import  
 `from nicetable import NiceTable`
 
-2. Create a `NiceTable` object, passing a `List`of column names to the constructor.  
-You can optionally pick a table layout, or override any formatting option (see below).  
+2. Create a `NiceTable`, providing a `List`of column names.  
+You can optionally pick a table layout, or override any formatting option.  
 `out = NiceTable(['Part ID','Weight(kg)'])`  
 `out = NiceTable(['Part ID','Weight(kg)'], layout='grep')`  
 `out = NiceTable(['Part ID','Weight(kg)'], layout='csv', header=False)`  
 
 3. Append new rows by calling `append()`, passing a `List` of values.  
-`out.append(['Someone','Human',177,81])`
+`out.append(my_list)`  
+`out.append(['626kst/j8',1.37])`  
 
-4. Print the variable  
+4. Print
 `print(out)`
 
 #### Quick example
@@ -29,7 +30,7 @@ from nicetable import NiceTable
 out = NiceTable(['Layout','Description'])
 for layout in NiceTable.builtin_layouts():
     out.append(layout)
-print (out)
+print(out)
 ````
 **Output**
 ````
@@ -48,7 +49,7 @@ See also "Formatting settings" below on how to further customize the layout.
 #### Layouts and formatting settings
 You can set the table layout in the constructor, with the `layout=` parameter.  
 In addition, you can change the layout or override any other formatting settings at any time, if needed.  
-Internally, `append()` stores the values as-is. The values are converted to strings only when the table is printed.  
+*Internally, `append()` stores the values as-is. The values are converted to strings only when the table is printed.*  
 
 The next example uses the builtin `NiceTable.SAMPLE_JSON`, which returns some sample JSON data.
 The code loops over a list of dictionaries, cherry-picking some values into the table columns.
@@ -58,10 +59,12 @@ It prints the table, than changes the layout to `csv` and overrides a formatting
 out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='default')
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
-print('-- default format --\n\n{}'.format(out))
+print('-- default format --\n')
+print(out)
 out.layout = 'csv'
 out.value_sep = '|'
-print('-- CSV with a pipe separator --\n\n{}'.format(out))
+print('-- CSV with a pipe separator --\n')
+print(out)
 `````
 Output:
 ````
@@ -82,23 +85,25 @@ Bulbasaur|Grass/Poison|70|6.901
 Pikachu|Electric|40|6.1
 Mewtwo|Psychic|200|122
 ````
-Note that the `default` layout uses `auto` value adjustment:
+Note that the `default` layout adjusts columns with `auto` adjustment:
 1. Strings are aligned to the left, numbers are aligned to the right.
 2. In each column, numbers are printed with the same number of fractional digits, so they nicely align.  
 For example, the last column input is 6.901, 6.1 (`float`) and 122 (`int`), all printed well-aligned.
 
 ## Other options
+TODO
+
 get_column(...)  <-- get a `List` of values
 
 *exceptions*
 one of each like
 
-out.format('colorful rainbow')
-out.append(1231)
-out.set_col... (index out of bound)
-
+out.format('colorful rainbow')  
+out.append(1231)  
+out.set_col... (index out of bound)  
 
 ## Formatting settings
+TODO
 
 `out.header = False`  
 `out.set_col_adjust('Type','center')`   *(set a column property by name)*  
