@@ -13,9 +13,9 @@ setup(
     description='A clean and elegant way to print tables with minimal boilerplate code',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='',
+    url='https://github.com/ofirmanor/nicetable',
     license='MIT',
-    keywords='table tabular textual display data ascii',
+    keywords='table tabular textual display data formatter ascii',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     classifiers=[
         'Programming Language :: Python :: 3.6',

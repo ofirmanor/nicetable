@@ -1,30 +1,29 @@
+# Basic example
 import json
 from nicetable import NiceTable
 # from __future__ import annotations   # only for Python 3.7 and up?
-
-out = NiceTable(['Layout','Description'])
-for layout in NiceTable.supported_layouts():
-    out.append(layout)
-print (out)
-
 
 out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
 print(out)
 
-# try a different built-in layout
-out.layout = 'md'
-# out.data_min_len = 1
-# print(out)
 
+out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='md')
+for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
+print(f'-- md format --\n{out}')
 out.layout = 'csv'
-# print(out)
-#
-# # customize the current layout
-# out.header_sepline = True
-# out.value_sep = '|'
-# print(out)
+out.value_sep = '|'
+print(f'-- CSV with a pipe separator --\n{out}')
+
+out = NiceTable(['Layout','Description'])
+for layout in NiceTable.builtin_layouts():
+    out.append(layout)
+print (out)
+
+
+# REMOVE ME
 
 # NiceTable.data_adjust = 'center'
 t = NiceTable(['f1','f2 description'])

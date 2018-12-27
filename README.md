@@ -6,9 +6,9 @@
 ## Basics
 Typical usage includes:
 1. Import it  
-`from nice_table import NiceTable`
+`from nicetable import NiceTable`
 2. Create a `NiceTable` object, passing a `List`of column names to the constructor.  
-You can optionally pick a table layout, or override any specific formatting option (see details below).  
+You can optionally pick a table layout, or override any formatting option (see below).  
 `out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])`    
 `out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='csv')`   
 `out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='csv', header=False)`   
@@ -17,15 +17,10 @@ You can optionally pick a table layout, or override any specific formatting opti
 4. Print the variable
 `print(out)`
 
-In addition, you could change any formatting settings any time.
-Internally, `append()` stores the values as-is. The values are converted to strings only when printing them.  
-`out.layout = 'csv'`  
-`out.header = False`  
-`out.set_col_adjust('Type','center')`   *(set a column property by name)*  
-`out.set_col_adjust(1,'center')`   *(set a column property by position)* 
-
-#### Example
-This example uses the builtin `NiceTable.SAMPLE_JSON`, which returns a string with some JSON data.
+#### Quick example
+This example includes the four steps discussed above.  
+The example uses the builtin `NiceTable.SAMPLE_JSON`, which returns a string with a sample JSON data.
+It iterates a list of dictionaries, cherry-picking some values into the table columns:
 ````python
 import json
 from nicetable import NiceTable
@@ -34,73 +29,106 @@ out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'])
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
 print(out)
-
-# try a different built-in layout
-out.layout = 'csv' 
-print(out)
-
-# customize the current layout
-out.header = False
-out.col_sep = '|'
-print(out)
 ````
-**First Output**
+**Output**
 ````
++-------------+----------------+--------------+--------------+
+|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
++-------------+----------------+--------------+--------------+
+|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
+|  Pikachu    |  Electric      |          40  |       6.100  |
+|  Mewtwo     |  Psychic       |         200  |     122.000  |
++-------------+----------------+--------------+--------------+
+````
+Note that by default, strings are aligned to the left, and numbers are aligned to the right (`auto` adjustment).  
+Also, all the numbers in each column are automatically printed with the same number of fractional digits, 
+so they nicely align. For example, the last column includes two `float` values (6.901, 6.1) and an `int` value, all aligned nicely.. 
+
+#### Layouts and formatting settings
+If needed, you pass a different table layout to the constructor, with the `layout=` parameter.  
+In addition, you can change the layout or override any other formatting settings at any time, if needed.  
+Internally, `append()` stores the values as-is. The values are converted to strings only when the table is printed.  
+
+Next, we will create a `NiceTable` with the `md` layout(Markdown format), populate it and print it.
+Than, we will switch the layout to `csv`, change a setting (replace the separator from `,` to `|`), and print it again.
+````python
+import json
+from nicetable import NiceTable
+
+out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='md')
+for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
+print(f'-- md format --\n{out}')
+out.layout = 'csv'
+out.value_sep = '|'
+print(f'-- CSV with a pipe separator --\n{out}')
 
 ````
-**Second Output**
-....
+**Output**
+````
+-- md format --
+|-------------|----------------|--------------|--------------|
+|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
+|-------------|----------------|--------------|--------------|
+|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
+|  Pikachu    |  Electric      |          40  |       6.100  |
+|  Mewtwo     |  Psychic       |         200  |     122.000  |
 
-....
-**Third Output**
-....
-
-....
-
-
-## additional variations
-You can access the list of supported table types and their description using 
-You can use `NiceTable` to print those as a table:
+-- CSV with a pipe separator --
+Name|Type|Height(cm)|Weight(kg)
+Bulbasaur|Grass/Poison|70 |6.901
+Pikachu|Electric|40 |6.1
+Mewtwo|Psychic|200|122
+````
+## Bulit-in layouts
+Calling `NiceTable.supported_layouts()` returns a list of all builtin layouts and their description. You can use `NiceTable` to format it...
 ````python
 from nicetable import NiceTable
 
 out = NiceTable(['Layout','Description'])
-for layout in NiceTable.supported_layouts():
+for layout in NiceTable.builtin_layouts():
     out.append(layout)
 print (out)
 ````
-Output
+**Output**
 ````
-+------------+------------------------------------------------------------------------------------------------------+
-|  Layout    |  Description                                                                                         |
-+------------+------------------------------------------------------------------------------------------------------+
-|  csv       |  comma-separated values with a one-line header.                                                      |
-|  default   |  fixed-width table with data auto-alignment.                                                         |
-|  grepable  |  tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc.  |
-|  md        |  for tables inside Markmown(.md) files. Uses the GFM table extension. Ex: README.md on github.       |
-|  tsv       |  tab-separated values with a one-line header.                                                        |
-+------------+------------------------------------------------------------------------------------------------------+
++-----------+------------------------------------------------------------------------------------------------------+
+|  Layout   |  Description                                                                                         |
++-----------+------------------------------------------------------------------------------------------------------+
+|  csv      |  comma-separated values with a one-line header.                                                      |
+|  default  |  fixed-width table with data auto-alignment.                                                         |
+|  grep     |  tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc.  |
+|  md       |  for tables inside Markmown(.md) files. Uses the GFM table extension. Ex: README.md on github.       |
+|  tsv      |  tab-separated values with a one-line header.                                                        |
++-----------+------------------------------------------------------------------------------------------------------+
 ````
+See also Formatting settings below to further customize the layout.
+## Other options
 
-like getting a column as list
+get_column(...)
 
-## exceptions
+**exceptions**
 one of each like
 
 out.format('colorful rainbow')
 out.append(1231)
 out.set_col... (index out of bound)
 
-## layouts and parameters
-blah blah
 
-1. this
 
-```` asdasda````
-2.
-3.
+## Formatting settings
 
-## adding a custom format
-inheritance 
+
+`out.header = False`  
+`out.set_col_adjust('Type','center')`   *(set a column property by name)*  
+`out.set_col_adjust(1,'center')`   *(set a column property by position)* 
+
+
+
+
+
+## additional variations
+
+like getting a column as list
 
 

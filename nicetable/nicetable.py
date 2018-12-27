@@ -6,8 +6,8 @@ from functions import coalesce
 class NiceTable:
     """A helper class that let you accumulate records and get them back in a printable tabular format    """
 
-    SAMPLE_JSON = '[{"name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.9},' \
-                  '{"name":"Pikachu","type":"Electric","height":40,"weight":6},' \
+    SAMPLE_JSON = '[{"name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' \
+                  '{"name":"Pikachu","type":"Electric","height":40,"weight":6.1},' \
                   '{"name":"Mewtwo","type":"Psychic","height":200,"weight":122}]'
     _ADJUST_OPTIONS = ['auto', 'left', 'center', 'right', 'compact']
 
@@ -112,12 +112,12 @@ class NiceTable:
         prefix = '_layout_as_'
         layout_funcs = [x[len(prefix):] for x in dir(self) if x.startswith(prefix)]
         if layout not in layout_funcs:
-            raise ValueError(f'Unknown table layout "{layout}", supported layouts are {layout_funcs}')
+            raise ValueError(f'Unknown table layout "{layout}", should be one of {layout_funcs}')
         getattr(self, prefix + layout)()  # calls the proper "_layout_as_*" function
         self._layout = layout
 
     @classmethod
-    def supported_layouts(cls):
+    def builtin_layouts(cls):
         prefix = '_layout_as_'
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
@@ -142,7 +142,7 @@ class NiceTable:
         self._layout_as_csv()
         self.value_sep = '\t'
 
-    def _layout_as_grepable(self) -> None:
+    def _layout_as_grep(self) -> None:
         """tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc."""
         self._layout_as_csv()
         self.value_sep = '\t'
@@ -275,7 +275,6 @@ class NiceTable:
 # TODO (idea) ASCII color for headers
 # PACKAGING / PUBLISHING
 # TODO finish readme
-# TODO pick license
 # TODO upload to github
 # TODO publish it to test
 # TODO publish it (final)
