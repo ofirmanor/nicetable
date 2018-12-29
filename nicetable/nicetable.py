@@ -1,6 +1,6 @@
 from typing import List, Union, Any, Optional
 import numbers
-from functions import coalesce
+from functions import coalesce, non_printable_to_space
 
 
 class NiceTable:
@@ -9,7 +9,9 @@ class NiceTable:
     SAMPLE_JSON = '[{"name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' \
                   '{"name":"Pikachu","type":"Electric","height":40,"weight":6.1},' \
                   '{"name":"Mewtwo","type":"Psychic","height":200,"weight":122}]'
+
     _ADJUST_OPTIONS = ['auto', 'left', 'center', 'right', 'compact']
+    _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
 
     def __init__(self,
                  columns_name: List[str],
@@ -25,6 +27,8 @@ class NiceTable:
                  data_min_len: Optional[int] = None,
                  value_spacing: Optional[int] = None,
                  value_sep: Optional[str] = None,
+                 value_escape_type: Optional[str] = None,
+                 value_escape_char: Optional[str] = None,
                  sepline_sep: Optional[str] = None,
                  sepline_char: Optional[str] = None):
         self._set_formatting_defaults()
@@ -40,6 +44,8 @@ class NiceTable:
         self.data_min_len = coalesce(data_min_len, self.data_min_len)
         self.value_spacing = coalesce(value_spacing, self.value_spacing)
         self.value_sep = coalesce(value_sep, self.value_sep)
+        self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
+        self.value_escape_char = coalesce(value_escape_char,self.value_escape_char)
         self.sepline_sep = coalesce(sepline_sep, self.sepline_sep)
         self.sepline_char = coalesce(sepline_char, self.sepline_char)
         # initialize the rest of the instance variables to represent an empty table
@@ -100,8 +106,20 @@ class NiceTable:
         self.data_min_len = 1
         self.value_spacing = 2
         self.value_sep = '|'
+        self.value_escape_type = 'ignore'
+        self.value_escape_char = '\\'
         self.sepline_sep = '+'
         self.sepline_char = '-'
+
+    @property
+    def value_escape_type(self):
+        return self._value_escape_type
+
+    @value_escape_type.setter
+    def value_escape_type(self, t: str) -> None:
+        if t not in NiceTable._VALUE_ESCAPING_OPTIONS:
+            raise ValueError(f'Unknown value escape type "{t}", should be one of {NiceTable._VALUE_ESCAPING_OPTIONS}')
+        self._value_escape_type = t
 
     @property
     def layout(self):
@@ -132,6 +150,7 @@ class NiceTable:
         self.data_adjust = 'compact'
         self.value_sep = ','
         self.value_spacing = 0
+        self.value_escape_type = 'remove'
         self.top_border = False
         self.bottom_border = False
         self.left_border = False
@@ -153,6 +172,8 @@ class NiceTable:
         # https://github.github.com/gfm/#tables-extension-
         # TODO (md layout) left align the values, use header marker for alignment (:--- :--: ---:)
         self.sepline_sep = '|'
+        self.value_escape_type = 'prefix'
+        self.value_escape_char = '\\'
         self.bottom_border = False
         self.data_min_len = 3
         # TODO (general) escape | in values (column names / cell) as \|
@@ -181,25 +202,34 @@ class NiceTable:
 
     def _formatted_element(self, element: Any, adjust: str, pos: int, element_type: str) -> str:
         """Format a string based on an adjustment and column properties"""
-        if adjust not in NiceTable._ADJUST_OPTIONS:
+        if adjust not in NiceTable._ADJUST_OPTIONS:  # TODO move it to the __str__ function
             raise ValueError(f'NiceTable._formatted_element({element_type}): '
                              f'got adjust value "{adjust}", expecting one of {NiceTable._ADJUST_OPTIONS}')
 
+        if self.value_escape_type == 'remove':
+            escaped_str_element = str(element).replace(self.value_sep, '')
+        elif self.value_escape_type == 'replace':
+            escaped_str_element = str(element).replace(self.value_sep,self.value_escape_char)
+        elif self.value_escape_type == 'prefix':
+            escaped_str_element = str(element).replace(self.value_sep, self.value_escape_char + self.value_sep)
+        else: # 'ignore'
+            escaped_str_element = str(element)
+
         col_len = max(self.col_widths[pos], self.data_min_len)
         if adjust == 'right':
-            out = str(element).rjust(col_len)
+            out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
-            out = str(element).center(col_len)
+            out = escaped_str_element.center(col_len)
         elif adjust == 'left':
-            out = str(element).ljust(col_len)
+            out = escaped_str_element.ljust(col_len)
         elif adjust == 'auto':
             if element_type == 'data' and isinstance(element, numbers.Number):
                 out = f'{element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
                 # do the magic
             else:
-                out = str(element).ljust(col_len)
+                out = escaped_str_element.ljust(col_len)
         else:  # compact
-            out = str(element).ljust(self.data_min_len)
+            out = escaped_str_element.ljust(self.data_min_len)
         return out
 
     def _formatted_column_name(self, pos: int) -> str:
