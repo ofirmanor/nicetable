@@ -6,9 +6,11 @@ from functions import coalesce, non_printable_to_space
 class NiceTable:
     """A helper class that let you accumulate records and get them back in a printable tabular format    """
 
-    SAMPLE_JSON = '[{"name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' \
-                  '{"name":"Pikachu","type":"Electric","height":40,"weight":6.1},' \
-                  '{"name":"Mewtwo","type":"Psychic","height":200,"weight":122}]'
+    SAMPLE_JSON = '[' + \
+        '{"id": "001", "name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' + \
+        '{"id": "025", "name":"Pikachu","type":"Electric","height":40,"weight":6.1},' + \
+        '{"id": "150", "name":"Mewtwo","type":"Psychic","height":200,"weight":122}' + \
+        ']'
 
     _ADJUST_OPTIONS = ['auto', 'left', 'center', 'right', 'compact']
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
@@ -25,6 +27,7 @@ class NiceTable:
                  right_border: Optional[bool] = None,
                  data_adjust: Optional[str] = None,
                  data_min_len: Optional[int] = None,
+                 data_none_string: Optional[str] = None,
                  value_spacing: Optional[int] = None,
                  value_sep: Optional[str] = None,
                  value_escape_type: Optional[str] = None,
@@ -42,6 +45,7 @@ class NiceTable:
         self.right_border = coalesce(right_border, self.right_border)
         self.data_adjust = coalesce(data_adjust, self.data_adjust)
         self.data_min_len = coalesce(data_min_len, self.data_min_len)
+        self.data_none_string = coalesce(data_none_string, self.data_none_string)
         self.value_spacing = coalesce(value_spacing, self.value_spacing)
         self.value_sep = coalesce(value_sep, self.value_sep)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
@@ -57,17 +61,17 @@ class NiceTable:
         self.col_digits_right = []   # per column: max number of digits in a number after the period
         for name in columns_name:
             self.columns.append([])
-            self.col_names.append(name)
+            self.col_names.append(self.data_none_string if name is None else name)
             self.col_adjust.append(None)
-            self.col_widths.append(len(name))
+            self.col_widths.append(len(s    tr(name)))
             self.col_digits_left.append(0)
             self.col_digits_right.append(0)
         self.total_lines = 0
         self.total_cols = len(self.col_names)
 
     def append(self, values: List[Any]) -> None:
-        """Append a new line."""
-        if not isinstance(values, list):
+        """Append a new line from list."""
+        if not isinstance(values, list):  # TODO support also a dict (extract keys matching field names)
             raise TypeError(f'NiceTable.append() expecting a list, got {type(values)}')
         if len(values) > self.total_cols:
             raise ValueError(f'NiceTable.append() got a list of {len(values)} elements, ' +
@@ -75,7 +79,7 @@ class NiceTable:
         self.total_lines += 1
         for i in range(self.total_cols):  #
             if i >= len(values):  # values[] can be shorter than self.total_cols
-                self.columns[i].append('')
+                self.columns[i].append(None)
             else:
                 value = values[i]
                 self.columns[i].append(value)
@@ -104,6 +108,7 @@ class NiceTable:
         self.right_border = True
         self.data_adjust = 'auto'
         self.data_min_len = 1
+        self.data_none_string = '<None>'
         self.value_spacing = 2
         self.value_sep = '|'
         self.value_escape_type = 'ignore'
@@ -116,10 +121,33 @@ class NiceTable:
         return self._value_escape_type
 
     @value_escape_type.setter
-    def value_escape_type(self, t: str) -> None:
-        if t not in NiceTable._VALUE_ESCAPING_OPTIONS:
-            raise ValueError(f'Unknown value escape type "{t}", should be one of {NiceTable._VALUE_ESCAPING_OPTIONS}')
-        self._value_escape_type = t
+    def value_escape_type(self, value_escape_type: str) -> None:
+        if value_escape_type not in NiceTable._VALUE_ESCAPING_OPTIONS:
+            raise ValueError(f'Unknown value escape type "{value_escape_type}", ' 
+                             f'should be one of {NiceTable._VALUE_ESCAPING_OPTIONS}')
+        self._value_escape_type = value_escape_type
+
+    @property
+    def header_adjust(self):
+        return self._header_adjust
+
+    @header_adjust.setter
+    def header_adjust(self, adjust: str) -> None:
+        if adjust not in NiceTable._ADJUST_OPTIONS:
+            raise ValueError(f'Unknown adjust "{adjust}", '
+                             f'should be one off {NiceTable._ADJUST_OPTIONS}')
+        self._header_adjust = adjust
+
+    @property
+    def data_adjust(self):
+        return self._data_adjust
+
+    @data_adjust.setter
+    def data_adjust(self, adjust: str) -> None:
+        if adjust not in NiceTable._ADJUST_OPTIONS:
+            raise ValueError(f'Unknown adjust "{adjust}", '
+                             f'should be one off {NiceTable._ADJUST_OPTIONS}')
+        self._data_adjust = adjust
 
     @property
     def layout(self):
@@ -176,7 +204,6 @@ class NiceTable:
         self.value_escape_char = '\\'
         self.bottom_border = False
         self.data_min_len = 3
-        # TODO (general) escape | in values (column names / cell) as \|
 
     def __str__(self):
         out = []
@@ -185,8 +212,8 @@ class NiceTable:
             out.append(sep_line)
         if self.header:
             out.append(self._generate_header_line())
-        if self.header_sepline:
-            out.append(sep_line)
+            if self.header_sepline:
+                out.append(sep_line)
         out += self._generate_data_lines()
         if self.bottom_border:
             out.append(sep_line)
@@ -201,11 +228,7 @@ class NiceTable:
         return f'{self.sepline_char * self.value_spacing}{self.sepline_sep}{self.sepline_char * self.value_spacing}'
 
     def _formatted_element(self, element: Any, adjust: str, pos: int, element_type: str) -> str:
-        """Format a string based on an adjustment and column properties"""
-        if adjust not in NiceTable._ADJUST_OPTIONS:  # TODO move it to the __str__ function
-            raise ValueError(f'NiceTable._formatted_element({element_type}): '
-                             f'got adjust value "{adjust}", expecting one of {NiceTable._ADJUST_OPTIONS}')
-
+        """Format a string based on an adjustment, value escaping and column properties"""
         if self.value_escape_type == 'remove':
             escaped_str_element = str(element).replace(self.value_sep, '')
         elif self.value_escape_type == 'replace':
@@ -215,8 +238,9 @@ class NiceTable:
         else: # 'ignore'
             escaped_str_element = str(element)
 
+        escaped_str_element = self.data_none_string if element is None else escaped_str_element
         col_len = max(self.col_widths[pos], self.data_min_len)
-        if adjust == 'right':
+        if adjust == 'right':   ## TODO: add numeric_left / numeric_center / numeric_right
             out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
             out = escaped_str_element.center(col_len)
@@ -244,7 +268,7 @@ class NiceTable:
         return f'{left_border}{line}{right_border}'
 
     def _generate_header_line(self) -> str:
-        """Generate header lines as list of lines"""
+        """Generate header lines as a string"""
         formatted_header_elements = []
         for i in range(len(self.col_names)):
             formatted_header_elements.append(self._formatted_column_name(i))
@@ -298,8 +322,9 @@ class NiceTable:
 # TODO integrate with SQL result set
 # TODO generate unittests (!) from commented examples
 # TODO make a class for layout functions with __category__ , __url__ in the constructor?
+# TODO add / remove column (data);  hide / show column (print)
 # FORMATTING
-# TODO custom value wrapper "", def. value for None
+# TODO custom value wrapper ""
 # TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
 # TODO (idea) ASCII color for headers
 # PACKAGING / PUBLISHING

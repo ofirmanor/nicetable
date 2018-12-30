@@ -29,7 +29,7 @@ t.append([222,'Me'])
 t.append([33333])
 t.set_col_adjust('f1','left')
 t.set_col_adjust(1,'center')
-
+t.data_adjust = 'auto'
 # t.col_adjust[0] = 'left'
 
 # t.set_col_adjust('f1','left')
