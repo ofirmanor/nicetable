@@ -1,10 +1,28 @@
-from typing import List, Union, Any, Optional
+from typing import List, Union, Any, Optional, Callable
 import numbers
-from functions import coalesce, non_printable_to_space
+from functions import *
 
 
 class NiceTable:
-    """A helper class that let you accumulate records and get them back in a printable tabular format    """
+    """A helper class that let you accumulate records and get them back in a printable tabular format
+
+    GENERAL
+        TODO import table directly from dictionary / JSON
+        TODO integrate with SQL result set
+        TODO generate unittests (!) from commented examples
+        TODO make a class for layout functions with __category__ , __url__ in the constructor?
+        TODO add / remove column (data);  hide / show column (print)
+    FORMATTING
+        TODO allow function per column (lambda etc)
+        TODO custom value quoting (wrapper) like ""
+        TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
+        TODO (idea) ASCII color for headers
+    PACKAGING / PUBLISHING
+        TODO finish readme
+        TODO publish to test
+        TODO publish (final)
+        TODO docstring for __init__ or class
+    """
 
     SAMPLE_JSON = '[' + \
         '{"id": "001", "name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' + \
@@ -57,6 +75,7 @@ class NiceTable:
         self.col_names = []
         self.col_adjust = []
         self.col_widths = []
+        self.col_funcs = []
         self.col_digits_left = []    # per column: max number of digits in a number
         self.col_digits_right = []   # per column: max number of digits in a number after the period
         for name in columns_name:
@@ -64,6 +83,7 @@ class NiceTable:
             self.col_names.append(self.data_none_string if name is None else name)
             self.col_adjust.append(None)
             self.col_widths.append(len(str(name)))
+            self.col_funcs.append(None)
             self.col_digits_left.append(0)
             self.col_digits_right.append(0)
         self.total_lines = 0
@@ -76,6 +96,7 @@ class NiceTable:
         if len(values) > self.total_cols:
             raise ValueError(f'NiceTable.append() got a list of {len(values)} elements, ' +
                              'expecting up to {self.total_cols}')
+
         self.total_lines += 1
         for i in range(self.total_cols):  #
             if i >= len(values):  # values[] can be shorter than self.total_cols
@@ -227,18 +248,19 @@ class NiceTable:
         """ computes the separator of elements for a separator line, for example '--+--' """
         return f'{self.sepline_char * self.value_spacing}{self.sepline_sep}{self.sepline_char * self.value_spacing}'
 
-    def _formatted_element(self, element: Any, adjust: str, pos: int, element_type: str) -> str:
-        """Format a string based on an adjustment, value escaping and column properties"""
+    def _formatted_element(self, element: Any, adjust: str, pos: int, is_header: bool) -> str:
+        """Format a string based on a pre-function, an adjustment, value escaping and column properties"""
+        processed_element = element if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](element)
         if self.value_escape_type == 'remove':
-            escaped_str_element = str(element).replace(self.value_sep, '')
+            escaped_str_element = str(processed_element).replace(self.value_sep, '')
         elif self.value_escape_type == 'replace':
-            escaped_str_element = str(element).replace(self.value_sep, self.value_escape_char)
+            escaped_str_element = str(processed_element).replace(self.value_sep, self.value_escape_char)
         elif self.value_escape_type == 'prefix':
-            escaped_str_element = str(element).replace(self.value_sep, self.value_escape_char + self.value_sep)
+            escaped_str_element = str(processed_element).replace(self.value_sep, self.value_escape_char + self.value_sep)
         else:  # 'ignore'
-            escaped_str_element = str(element)
+            escaped_str_element = str(processed_element)
 
-        escaped_str_element = self.data_none_string if element is None else escaped_str_element
+        escaped_str_element = self.data_none_string if processed_element is None else escaped_str_element
         col_len = max(self.col_widths[pos], self.data_min_len)
         if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right
             out = escaped_str_element.rjust(col_len)
@@ -247,8 +269,8 @@ class NiceTable:
         elif adjust == 'left':
             out = escaped_str_element.ljust(col_len)
         elif adjust == 'auto':
-            if element_type == 'data' and isinstance(element, numbers.Number):
-                out = f'{element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
+            if is_header == False and isinstance(processed_element, numbers.Number):
+                out = f'{processed_element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
                 # do the magic
             else:
                 out = escaped_str_element.ljust(col_len)
@@ -257,10 +279,10 @@ class NiceTable:
         return out
 
     def _formatted_column_name(self, pos: int) -> str:
-        return self._formatted_element(self.col_names[pos], self.header_adjust, pos, 'column name')
+        return self._formatted_element(self.col_names[pos], self.header_adjust, pos, True)
 
     def _formatted_value(self, pos: int, value: Any) -> str:
-        return self._formatted_element(value, self.col_adjust[pos] or self.data_adjust, pos, 'data')
+        return self._formatted_element(value, self.col_adjust[pos] or self.data_adjust, pos, False)
 
     def _wrap_data_with_borders(self, line: str) -> str:
         left_border = f'{self.value_sep}{" " * self.value_spacing}' if self.left_border else ''
@@ -307,6 +329,9 @@ class NiceTable:
             raise TypeError('NiceTable.set_col_adjust(): '
                             f'expects str or int (column name or position), got {type(col)}')
 
+    def set_col_func(selfself, col: Union[int, str], func: Callable[[Any], Any]) -> None:
+        pass  # TODO implement
+
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):
             return self.columns[self.col_names.index(col)]  # raises ValueError on bad input
@@ -316,19 +341,3 @@ class NiceTable:
             raise TypeError('NiceTable.get_column(): ' 
                             f'expects str or int (column name or position), got {type(col)}')
 
-
-# GENERAL
-# TODO import table directly from dictionary / JSON
-# TODO integrate with SQL result set
-# TODO generate unittests (!) from commented examples
-# TODO make a class for layout functions with __category__ , __url__ in the constructor?
-# TODO add / remove column (data);  hide / show column (print)
-# FORMATTING
-# TODO custom value wrapper ""
-# TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
-# TODO (idea) ASCII color for headers
-# PACKAGING / PUBLISHING
-# TODO finish readme
-# TODO publish it to test
-# TODO publish it (final)
-# TODO docstring for __init__

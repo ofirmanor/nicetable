@@ -110,3 +110,16 @@ class LayoutOptions(TestCase):
     # TODO: value_escape_char: Optional[str] = None,
     # TODO: sepline_sep: Optional[str] = None,
     # TODO: sepline_char: Optional[str] = None):
+
+
+    def test__set_col_func (self):
+        before_col0 = self.tbl.columns[0]
+        before_col1 = self.tbl.columns[1]
+        # self.tbl.set_col_func(0,lambda x: x.upper())
+        # self.tbl.set_col_func('Type',lambda x: x.lower())
+        self.tbl.col_funcs[0] = lambda x: x.upper()
+        self.tbl.col_funcs[1] = lambda x: x.lower() if x != 'Electric' else None
+        self.tbl.col_funcs[3] = lambda x: format(f'{x:5.1f}kg')
+
+        out_lines = str(self.tbl).splitlines()
+        cols = list(line.strip('|').split('|') for line in out_lines)
