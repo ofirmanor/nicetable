@@ -27,7 +27,7 @@ This example uses `NiceTable` to print that list with the default table layout:
 ````python
 from nicetable import NiceTable
 
-out = NiceTable(['Layout','Description'])
+out = NiceTable(['Layout', 'Description'])
 for layout in NiceTable.builtin_layouts():
     out.append(layout)
 print(out)
@@ -55,9 +55,9 @@ The code loops over a list of dictionaries, cherry-picking some values into the 
 It prints the table, than changes the layout to `csv` and overrides a formatting option
 (changes the separator from `,` to `|`) before printing it again.
 ````python
-out = NiceTable(['Name','Type','Height(cm)','Weight(kg)'], layout='default')
+out = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'],pokemon['height'],pokemon['weight']])
+    out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
 print('-- default format --\n')
 print(out)
 out.layout = 'csv'

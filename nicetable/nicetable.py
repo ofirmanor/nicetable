@@ -49,7 +49,7 @@ class NiceTable:
         self.value_spacing = coalesce(value_spacing, self.value_spacing)
         self.value_sep = coalesce(value_sep, self.value_sep)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
-        self.value_escape_char = coalesce(value_escape_char,self.value_escape_char)
+        self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
         self.sepline_sep = coalesce(sepline_sep, self.sepline_sep)
         self.sepline_char = coalesce(sepline_char, self.sepline_char)
         # initialize the rest of the instance variables to represent an empty table
@@ -63,7 +63,7 @@ class NiceTable:
             self.columns.append([])
             self.col_names.append(self.data_none_string if name is None else name)
             self.col_adjust.append(None)
-            self.col_widths.append(len(s    tr(name)))
+            self.col_widths.append(len(str(name)))
             self.col_digits_left.append(0)
             self.col_digits_right.append(0)
         self.total_lines = 0
@@ -90,7 +90,7 @@ class NiceTable:
                     value = str(value)
                     dot_pos = value.find('.')
                     if dot_pos == -1:
-                        self.col_digits_left[i] = max(self.col_digits_left[i],len(value))
+                        self.col_digits_left[i] = max(self.col_digits_left[i], len(value))
                     else:
                         self.col_digits_left[i] = max(self.col_digits_left[i], len(value[:dot_pos]))
                         self.col_digits_right[i] = max(self.col_digits_right[i], len(value[dot_pos+1:]))
@@ -232,15 +232,15 @@ class NiceTable:
         if self.value_escape_type == 'remove':
             escaped_str_element = str(element).replace(self.value_sep, '')
         elif self.value_escape_type == 'replace':
-            escaped_str_element = str(element).replace(self.value_sep,self.value_escape_char)
+            escaped_str_element = str(element).replace(self.value_sep, self.value_escape_char)
         elif self.value_escape_type == 'prefix':
             escaped_str_element = str(element).replace(self.value_sep, self.value_escape_char + self.value_sep)
-        else: # 'ignore'
+        else:  # 'ignore'
             escaped_str_element = str(element)
 
         escaped_str_element = self.data_none_string if element is None else escaped_str_element
         col_len = max(self.col_widths[pos], self.data_min_len)
-        if adjust == 'right':   ## TODO: add numeric_left / numeric_center / numeric_right
+        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right
             out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
             out = escaped_str_element.center(col_len)
@@ -262,9 +262,9 @@ class NiceTable:
     def _formatted_value(self, pos: int, value: Any) -> str:
         return self._formatted_element(value, self.col_adjust[pos] or self.data_adjust, pos, 'data')
 
-    def _wrap_data_with_borders(self, line:str) -> str:
-        left_border = f'{self.value_sep}{" " * self.value_spacing}' if self.left_border == True else ''
-        right_border = f'{" " * self.value_spacing}{self.value_sep}' if  self.right_border == True else ''
+    def _wrap_data_with_borders(self, line: str) -> str:
+        left_border = f'{self.value_sep}{" " * self.value_spacing}' if self.left_border else ''
+        right_border = f'{" " * self.value_spacing}{self.value_sep}' if self.right_border else ''
         return f'{left_border}{line}{right_border}'
 
     def _generate_header_line(self) -> str:
@@ -279,8 +279,8 @@ class NiceTable:
         out, sep_elements = [], []
         for i in range(len(self.col_names)):
             sep_elements.append(self.sepline_char * len(self._formatted_column_name(i)))
-        left_border = f'{self.sepline_sep}{self.sepline_char * self.value_spacing}' if self.left_border == True else ''
-        right_border = f'{self.sepline_char * self.value_spacing}{self.sepline_sep}' if self.right_border == True else ''
+        left_border = f'{self.sepline_sep}{self.sepline_char * self.value_spacing}' if self.left_border else ''
+        right_border = f'{self.sepline_char * self.value_spacing}{self.sepline_sep}' if self.right_border else ''
         return left_border + self._get_sepline_separator().join(sep_elements) + right_border
 
     def _generate_data_lines(self) -> List[str]:
@@ -331,3 +331,4 @@ class NiceTable:
 # TODO finish readme
 # TODO publish it to test
 # TODO publish it (final)
+# TODO docstring for __init__
