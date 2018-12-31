@@ -1,10 +1,25 @@
 from unittest import TestCase
 from nicetable import NiceTable
+from typing import List
 import json
+
+#import sys
+# print(f'PATH:\n{sys.path}')
 
 
 class LayoutOptions(TestCase):
     """ Tests the effects of setting different layout options"""
+
+    def default_to_lines_cols(self) -> List[List[str]]:
+        """Capture the test table as a string and return it as a list (by line) of list of string values."""
+        lines = str(self.tbl).splitlines()[1:-1]  # remove top/bottom borders
+        del lines[1]  # remove sepline
+        return list(line.strip('|').split('|') for line in lines)
+
+    def default_to_cols_lines(self) -> List[List[str]]:
+        """Capture the test table as a string and return it as a a list (by column) of list of string values."""
+        return list(map(list, zip(*self.default_to_lines_cols())))  # "magic" transpose code
+
     def setUp(self):  # TODO: maybe replace with a factory class like factory_boy
         # all layout options tests starts with the same table data:
         self.tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
@@ -19,24 +34,25 @@ class LayoutOptions(TestCase):
                         'Specifying an unknown layout should raise with clear error')
 
     def test__header(self):
-        lines_before = len(self.tbl_as_lines)
+        lines_before = self.tbl_as_lines
         self.tbl.header = False
-        lines_after = len(str(self.tbl).splitlines())
-        self.assertEqual(lines_before-2, lines_after,
+        lines_after = str(self.tbl).splitlines()
+        self.assertEqual(lines_before[2:], lines_after,
                          'Removing the header should remove two lines')
 
     def test__header_sepline(self):
-        lines_before = len(self.tbl_as_lines)
+        lines_before = self.tbl_as_lines
         self.tbl.header_sepline = False
-        lines_after = len(str(self.tbl).splitlines())
-        self.assertEqual(lines_before - 1, lines_after,
+        lines_after = str(self.tbl).splitlines()
+        del lines_before[2]
+        self.assertEqual(lines_before, lines_after,
                          'Removing the header sepline should remove one line when header was displayed')
 
         self.tbl.header = False
         self.tbl.header_sepline = True
-        lines_before = len(str(self.tbl).splitlines())
+        lines_before = str(self.tbl).splitlines()
         self.tbl.header_sepline = False
-        lines_after = len(str(self.tbl).splitlines())
+        lines_after = str(self.tbl).splitlines()
         self.assertEqual(lines_before, lines_after,
                          'Removing the header sepline should have no effect if header was not displayed')
 
@@ -48,43 +64,45 @@ class LayoutOptions(TestCase):
 
     def test__header_adjust(self):
         self.tbl.header_adjust = 'center'
-        out_lines = str(self.tbl).splitlines()
-        header_cols = out_lines[1].strip('|').split('|')
-        self.assertEqual(header_cols[1], '      Type      ',
+        header_line = str(self.tbl).splitlines()[1]
+        self.assertEqual(header_line, '|     Name    |      Type      |  Height(cm)  |  Weight(kg)  |',
                          'Center-adjusted header')
 
         self.tbl.header_adjust = 'right'
-        out_lines = str(self.tbl).splitlines()
-        header_cols = out_lines[1].strip('|').split('|')
-        self.assertEqual(header_cols[1], '          Type  ',
+        header_line = str(self.tbl).splitlines()[1]
+        self.assertEqual(header_line, '|       Name  |          Type  |  Height(cm)  |  Weight(kg)  |',
                          'Right-adjusted header')
 
         self.tbl.header_adjust = 'left'
-        out_lines = str(self.tbl).splitlines()
-        header_cols = out_lines[1].strip('|').split('|')
-        self.assertEqual(header_cols[1], '  Type          ',
+        header_line = str(self.tbl).splitlines()[1]
+        self.assertEqual(header_line, '|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |',
                          'Left-adjusted header')
 
     def test__borders(self):
+        lines_before = self.tbl_as_lines
         self.tbl.top_border = False
-        out_lines = str(self.tbl).splitlines()
-        self.assertEqual(out_lines[0], self.tbl_as_lines[1],
-                         'Without top border, the first line is the original second line')
+        lines_after = str(self.tbl).splitlines()
+        del lines_before[0]
+        self.assertEqual(lines_before, lines_after,
+                         'Removed top border')
 
         self.tbl.bottom_border = False
-        out_lines = str(self.tbl).splitlines()
-        self.assertEqual(out_lines[-1], self.tbl_as_lines[-2],
-                         'Without bottom border, the last line is the original second-to-last line')
+        lines_after = str(self.tbl).splitlines()
+        del lines_before[-1]
+        self.assertEqual(lines_before, lines_after,
+                         'Removed top + bottom borders')
 
         self.tbl.left_border = False
-        out_lines = str(self.tbl).splitlines()
-        self.assertEqual(out_lines[3], self.tbl_as_lines[4][3:],
-                         'Without left border, output lines missing the default "|  " prefix')
+        lines_after = str(self.tbl).splitlines()
+        lines_before = list(line[3:] for line in lines_before)
+        self.assertEqual(lines_before, lines_after,
+                         'removed top + bottom + left ("|  ") borders')
 
         self.tbl.right_border = False
-        out_lines = str(self.tbl).splitlines()
-        self.assertEqual(out_lines[3], self.tbl_as_lines[4][3:-3],
-                         'Without right and left borders, output lines are not wrapped with "|  ....  |" ')
+        lines_after = str(self.tbl).splitlines()
+        lines_before = list(line[:-3] for line in lines_before)
+        self.assertEqual(lines_before, lines_after,
+                         'removed top + bottom + left + right ("  |") borders')
 
     # TODO: test data_adjust: Optional[str] = None,
     # TODO: test data_min_len: Optional[int] = None,
@@ -92,16 +110,13 @@ class LayoutOptions(TestCase):
     def test__data_none_string__header(self):
         self.tbl.col_names[1] = None
         self.tbl.columns[1][1] = None
-        out_lines = str(self.tbl).splitlines()
 
-        header_cols = out_lines[1].strip('|').split('|')
+        data_cols = self.default_to_cols_lines()
         self.assertEqual(self.tbl.data_none_string, '<None>',
-                         'default field name is <None>')
-        self.assertEqual(header_cols[1].strip(), self.tbl.data_none_string,
+                         'default field name for None is <None>')
+        self.assertEqual(data_cols[1][0].strip(), self.tbl.data_none_string,
                          'None value for a field name should become self.data_none_string')
-
-        cols = out_lines[4].strip('|').split('|')
-        self.assertEqual(cols[1].strip(), self.tbl.data_none_string,
+        self.assertEqual(data_cols[1][2].strip(), self.tbl.data_none_string,
                          'None value in data should become self.data_none_string')
 
     # TODO: test value_spacing: Optional[int] = None,
@@ -111,15 +126,26 @@ class LayoutOptions(TestCase):
     # TODO: sepline_sep: Optional[str] = None,
     # TODO: sepline_char: Optional[str] = None):
 
+    def test__set_col_func__type(self):
+        with self.assertRaises(TypeError) as context:
+            self.tbl.set_col_func(None, lambda x: x)
+        self.assertEqual(str(context.exception),
+                         "NiceTable.set_col_func(): first parameter should be str or int (column name or position), got <class 'NoneType'>",
+                         'first param of set_col_func must be int or str')
 
-    def test__set_col_func (self):
-        before_col0 = self.tbl.columns[0]
-        before_col1 = self.tbl.columns[1]
-        # self.tbl.set_col_func(0,lambda x: x.upper())
-        # self.tbl.set_col_func('Type',lambda x: x.lower())
-        self.tbl.col_funcs[0] = lambda x: x.upper()
-        self.tbl.col_funcs[1] = lambda x: x.lower() if x != 'Electric' else None
-        self.tbl.col_funcs[3] = lambda x: format(f'{x:5.1f}kg')
+        with self.assertRaises(IndexError) as context:
+            self.tbl.set_col_func('my col', lambda x: x)
+        self.assertTrue(str(context.exception).
+                        startswith('NiceTable.set_col_func(): got col value "my col", expecting one of'),
+                        'when first param of set_col_func is a str, it must be a valid column name')
 
-        out_lines = str(self.tbl).splitlines()
-        cols = list(line.strip('|').split('|') for line in out_lines)
+
+    def test__set_col_func(self):
+        self.tbl.set_col_func(0, lambda x: x.upper())
+        self.tbl.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
+
+        data_cols = self.default_to_cols_lines()
+        self.assertEqual(list(value.strip() for value in data_cols[0][1:]), ['BULBASAUR', 'PIKACHU', 'MEWTWO'],
+                         'applying this function should result in uppercase values')
+        self.assertEqual(list(value.strip() for value in data_cols[1][1:]), ['grass/poison', '<None>', 'psychic'],
+                         'applying this function should result in lowecase / None values')

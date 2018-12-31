@@ -1,4 +1,4 @@
-from typing import List, Union, Any, Optional, Callable
+from typing import List, Union, Optional, Callable, Any
 import numbers
 from functions import *
 
@@ -24,6 +24,7 @@ class NiceTable:
         TODO docstring for __init__ or class
     """
 
+    # noinspection SpellCheckingInspection
     SAMPLE_JSON = '[' + \
         '{"id": "001", "name":"Bulbasaur","type":"Grass/Poison","height":70,"weight":6.901},' + \
         '{"id": "025", "name":"Pikachu","type":"Electric","height":40,"weight":6.1},' + \
@@ -75,7 +76,7 @@ class NiceTable:
         self.col_names = []
         self.col_adjust = []
         self.col_widths = []
-        self.col_funcs = []
+        self.col_funcs: List[Optional[Callable[[Any], Any]]] = []
         self.col_digits_left = []    # per column: max number of digits in a number
         self.col_digits_right = []   # per column: max number of digits in a number after the period
         for name in columns_name:
@@ -256,7 +257,8 @@ class NiceTable:
         elif self.value_escape_type == 'replace':
             escaped_str_element = str(processed_element).replace(self.value_sep, self.value_escape_char)
         elif self.value_escape_type == 'prefix':
-            escaped_str_element = str(processed_element).replace(self.value_sep, self.value_escape_char + self.value_sep)
+            escaped_str_element = str(processed_element).\
+                replace(self.value_sep, self.value_escape_char + self.value_sep)
         else:  # 'ignore'
             escaped_str_element = str(processed_element)
 
@@ -269,7 +271,7 @@ class NiceTable:
         elif adjust == 'left':
             out = escaped_str_element.ljust(col_len)
         elif adjust == 'auto':
-            if is_header == False and isinstance(processed_element, numbers.Number):
+            if is_header is False and isinstance(processed_element, numbers.Number):
                 out = f'{processed_element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
                 # do the magic
             else:
@@ -329,8 +331,20 @@ class NiceTable:
             raise TypeError('NiceTable.set_col_adjust(): '
                             f'expects str or int (column name or position), got {type(col)}')
 
-    def set_col_func(selfself, col: Union[int, str], func: Callable[[Any], Any]) -> None:
-        pass  # TODO implement
+    def set_col_func(self, col: Union[int, str], func: Optional[Callable[[Any], Any]]) -> None:
+        if isinstance(col, int):
+            # noinspection PyTypeChecker
+            self.col_funcs[col] = func
+        elif isinstance(col, str):
+            # noinspection PyTypeChecker
+            if col not in self.col_names:
+                raise IndexError("NiceTable.set_col_func(): " +
+                                 f'got col value "{col}", expecting one of {self.col_names}')
+            self.col_funcs[self.col_names.index(col)] = func
+        else:
+            raise TypeError('NiceTable.set_col_func(): '
+                            f'first parameter should be str or int (column name or position), got {type(col)}')
+
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):
