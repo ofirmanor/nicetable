@@ -157,7 +157,7 @@ class NiceTable:
     def header_adjust(self, adjust: str) -> None:
         if adjust not in NiceTable._ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one off {NiceTable._ADJUST_OPTIONS}')
+                             f'should be one of {NiceTable._ADJUST_OPTIONS}')
         self._header_adjust = adjust
 
     @property
@@ -168,7 +168,7 @@ class NiceTable:
     def data_adjust(self, adjust: str) -> None:
         if adjust not in NiceTable._ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one off {NiceTable._ADJUST_OPTIONS}')
+                             f'should be one of {NiceTable._ADJUST_OPTIONS}')
         self._data_adjust = adjust
 
     @property
@@ -264,7 +264,7 @@ class NiceTable:
 
         escaped_str_element = self.data_none_string if processed_element is None else escaped_str_element
         col_len = max(self.col_widths[pos], self.data_min_len)
-        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right
+        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right (well-alligned)
             out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
             out = escaped_str_element.center(col_len)
@@ -345,7 +345,6 @@ class NiceTable:
             raise TypeError('NiceTable.set_col_func(): '
                             f'first parameter should be str or int (column name or position), got {type(col)}')
 
-
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):
             return self.columns[self.col_names.index(col)]  # raises ValueError on bad input
@@ -354,4 +353,3 @@ class NiceTable:
         else:
             raise TypeError('NiceTable.get_column(): ' 
                             f'expects str or int (column name or position), got {type(col)}')
-
