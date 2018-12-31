@@ -21,7 +21,8 @@ class LayoutOptions(TestCase):
         """Capture the test table as a string and return it as a list (by line) of list of string values."""
         lines = str(self.tbl).splitlines()[1:-1]  # remove top/bottom borders
         del lines[1]  # remove sepline
-        return list(line.strip('|').split('|') for line in lines)
+        sep = self.tbl.value_sep
+        return list(line.strip(sep).split(sep) for line in lines)
 
     def default_to_cols_lines(self) -> List[List[str]]:
         """Capture the test table as a string and return it as a a list (by column) of list of string values."""
@@ -117,7 +118,6 @@ class LayoutOptions(TestCase):
     def test__data_adjust__lov(self):
         with self.assertRaises(ValueError) as context:
             self.tbl.data_adjust = None
-        print(str(context.exception))
         self.assertTrue(str(context.exception).startswith('Unknown adjust "None", should be one of ['),
                         'Specifying an unknown header adjustment should raise with clear error')
 
@@ -180,12 +180,71 @@ class LayoutOptions(TestCase):
                          data_cols[1][2].strip(),
                          'None value in data should become self.data_none_string')
 
-    # TODO: test value_spacing: Optional[int] = None,
-    # TODO: test value_sep: Optional[str] = None,
-    # TODO: value_escape_type: Optional[str] = None,
-    # TODO: value_escape_char: Optional[str] = None,
-    # TODO: sepline_sep: Optional[str] = None,
-    # TODO: sepline_char: Optional[str] = None):
+    def test__value_spacing(self):
+        self.tbl.value_spacing = 1
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('| Pikachu   | Electric     |         40 |      6.100 |',
+                         data_line,
+                         'value spacing test - should be one space (beyond the fixed column width')
+
+    def test__value_sep(self):
+        self.tbl.value_sep = 'oOo'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('oOo  Pikachu    oOo  Electric      oOo          40  oOo       6.100  oOo',
+                         data_line,
+                         'value sep should be oOo')
+
+    def test__value_escape_type__lov(self):
+        with self.assertRaises(ValueError) as context:
+            self.tbl.value_escape_type = 'escape'
+        self.assertTrue(str(context.exception).startswith('Unknown value escape type "escape", should be one of ['),
+                        'Specifying an unknown value escape type should raise with clear error')
+
+    def test__value_escape_type(self):
+        self.tbl.value_sep = '/'  # value "Grass/Poison" in cell [1][1] now includes the value sep "/" in it
+
+        self.tbl.value_escape_type = 'remove'
+        value = self.default_to_cols_lines()[1][1]
+        self.assertEqual('GrassPoison',
+                         value.strip(),
+                         'handling value_sep character in value by removing it')
+
+        self.tbl.value_escape_type = 'replace'
+        self.tbl.value_escape_char = '+'
+        value = self.default_to_cols_lines()[1][1]
+        self.assertEqual('Grass+Poison',
+                         value.strip(),
+                         'handling value_sep character in value by replacing it')
+
+        self.tbl.value_escape_type = 'prefix'
+        self.tbl.value_escape_char = '\\'
+        data_line = str(self.tbl).splitlines()[3]
+        self.assertEqual('/  Bulbasaur  /  Grass\/Poison  /          70  /       6.901  /',
+                         data_line,
+                         'handling value_sep character in value by prefixing it')
+
+        self.tbl.value_escape_type = 'ignore'
+        data_line = str(self.tbl).splitlines()[3]
+        self.assertEqual('/  Bulbasaur  /  Grass/Poison  /          70  /       6.901  /',
+                         data_line,
+                         'ignoring the value_sep character in the value')
+
+    def test__value_escape_char(self):
+        pass  # covered by test__value_escape_type
+
+    def test__sepline_sep(self):
+        self.tbl.sepline_sep = '/'
+        data_line = str(self.tbl).splitlines()[0]
+        self.assertEqual('/-------------/----------------/--------------/--------------/',
+                         data_line,
+                         'set sepline separator to /')
+
+    def test__sepline_char(self):
+        self.tbl.sepline_char = '*'
+        data_line = str(self.tbl).splitlines()[0]
+        self.assertEqual('+*************+****************+**************+**************+',
+                         data_line,
+                         'set sepline character to *')
 
     # TODO: set_col_adj
     def test__set_col_func__type(self):
