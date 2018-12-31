@@ -55,6 +55,9 @@ The code loops over a list of dictionaries, cherry-picking some values into the 
 It prints the table, than changes the layout to `csv` and overrides a formatting option
 (changes the separator from `,` to `|`) before printing it again.
 ````python
+import json
+from nicetable import NiceTable
+
 out = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])

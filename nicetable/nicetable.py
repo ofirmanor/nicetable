@@ -1,6 +1,7 @@
-from typing import List, Union, Optional, Callable, Any
 import numbers
-from functions import *
+from typing import List, Union, Optional, Callable, Any
+
+from aux_functions import *
 
 
 class NiceTable:
@@ -264,7 +265,7 @@ class NiceTable:
 
         escaped_str_element = self.data_none_string if processed_element is None else escaped_str_element
         col_len = max(self.col_widths[pos], self.data_min_len)
-        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right (well-alligned)
+        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right (well-aligned)
             out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
             out = escaped_str_element.center(col_len)

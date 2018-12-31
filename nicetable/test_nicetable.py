@@ -3,7 +3,7 @@ from nicetable import NiceTable
 from typing import List
 import json
 
-#import sys
+# import sys
 # print(f'PATH:\n{sys.path}')
 
 
@@ -12,7 +12,7 @@ class LayoutOptions(TestCase):
 
     def setUp(self):  # TODO: maybe replace with a factory class like factory_boy
         # all layout options tests starts with the same table data:
-        self.tbl= NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
+        self.tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
         for pokemon in json.loads(NiceTable.SAMPLE_JSON):
             self.tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
         self.tbl_as_lines = str(self.tbl).splitlines()
@@ -136,15 +136,15 @@ class LayoutOptions(TestCase):
 
         self.tbl.data_adjust = 'right'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|    Pikachu  |      Electric  |          40  |         6.1  |' ,
+        self.assertEqual('|    Pikachu  |      Electric  |          40  |         6.1  |',
                          data_line,
-        'Right-adjusted data')
+                         'Right-adjusted data')
 
         self.tbl.data_adjust = 'auto'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|  Pikachu    |  Electric      |          40  |       6.100  |' ,
+        self.assertEqual('|  Pikachu    |  Electric      |          40  |       6.100  |',
                          data_line,
-        'auto-adjusted data (last column should be 6.100 due to other values in the column')
+                         'auto-adjusted data (last column should be 6.100 due to other values in the column')
 
         self.tbl.data_adjust = 'compact'
         data_line = str(self.tbl).splitlines()[4]
@@ -187,7 +187,6 @@ class LayoutOptions(TestCase):
     # TODO: sepline_sep: Optional[str] = None,
     # TODO: sepline_char: Optional[str] = None):
 
-
     # TODO: set_col_adj
     def test__set_col_func__type(self):
         with self.assertRaises(TypeError) as context:
@@ -203,7 +202,6 @@ class LayoutOptions(TestCase):
                         startswith('NiceTable.set_col_func(): got col value "my col", expecting one of'),
                         'when first param of set_col_func is a str, it must be a valid column name')
 
-
     def test__set_col_func(self):
         self.tbl.set_col_func(0, lambda x: x.upper())
         self.tbl.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
@@ -214,4 +212,4 @@ class LayoutOptions(TestCase):
                          'applying this function should result in uppercase values')
         self.assertEqual(['grass/poison', '<None>', 'psychic'],
                          list(value.strip() for value in data_cols[1][1:]),
-                         'applying this function should result in lowecase / None values')
+                         'applying this function should result in lowercase / None values')
