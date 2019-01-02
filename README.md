@@ -1,6 +1,6 @@
 # nicetable
 
-* A clean and elegant way to print tables with minimal boilerplate code.
+* A clean and elegant way to print tables in Python with minimal boilerplate code.
 * Built with modern Python, including type annotations. Requires Python 3.6 and up.
 
 ## Basics
@@ -105,7 +105,8 @@ out.append(1231)
 out.set_col... (index out of bound)  
 
 ## Formatting settings
-TODO
+
+
 
 `out.header = False`  
 `out.set_col_adjust('Type','center')`   *(set a column property by name)*  

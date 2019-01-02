@@ -41,3 +41,22 @@ t.data_adjust = 'auto'
 # print(t.get_column(0))
 # print(t.get_column('f1'))
 # print(t.get_column(0))
+
+
+class MyNiceTable(NiceTable):
+    def _layout_as_winter_columns(self) -> None:
+        """Table with a winter-themed separator. Quite Ugly."""
+        self.value_sep = '❄☂🌧☂❄'
+        self.sepline_sep = '❄☂🌧☂❄'
+        self.sepline_char = 'ˣ'
+
+
+out = MyNiceTable(['Layout', 'Description'], layout='winter_columns')
+for layout in MyNiceTable.builtin_layouts():
+    out.append(layout)
+print(out)
+
+out = NiceTable(['Setting', 'Type', 'Description'], layout='md')
+for setting in NiceTable.FORMATTING_SETTINGS:
+    out.append(setting)
+print(out)

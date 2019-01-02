@@ -8,15 +8,16 @@ class NiceTable:
     """A helper class that let you accumulate records and get them back in a printable tabular format
 
     GENERAL
+        TODO: refactor all... data --> value value --> cell
         TODO import table directly from dictionary / JSON
         TODO integrate with SQL result set
-        TODO generate unittests (!) from commented examples
+        TODO finish unittests for coverage
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO add / remove column (data);  hide / show column (print)
     FORMATTING
-        TODO allow function per column (lambda etc)
+        TODO move column-width computation to __str__ to handle corner cases like changing None representation etc
         TODO custom value quoting (wrapper) like ""
-        TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
+        TODO let the user directly change column wi dth - handle "too short"? (ignore or text wrap)
         TODO (idea) ASCII color for headers
     PACKAGING / PUBLISHING
         TODO finish readme
@@ -34,6 +35,25 @@ class NiceTable:
 
     _ADJUST_OPTIONS = ['auto', 'left', 'center', 'right', 'compact']
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
+
+    FORMATTING_SETTINGS = [
+        ['header', 'bool', 'whether the table header will be printed'],
+        ['header_sepline', 'bool', 'if the header is printed, whether a sepline will be printed after it'],
+        ['header_adjust', 'str', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
+        ['top_border', 'bool', 'whether the table top border will be printed'],
+        ['bottom_border', 'bool', 'whether the table bottom border will be printed'],
+        ['left_border', 'bool', 'whether the table left border will be printed'],
+        ['right_border', 'bool', 'whether the table right border will be printed'],
+        ['data_adjust', 'str', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
+        ['data_min_len', 'int', 'minimal string length of a value (shorter value will be space-padded'],
+        ['data_none_string', 'str', 'string representation of the None value'],
+        ['value_spacing', 'int', 'number of spaces to add to each side of a value'],
+        ['value_sep', 'str', 'a string that separates values / column names'],
+        ['value_escape_type', 'str', f'handling of value_sep inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
+        ['value_escape_char', 'str', 'a string to replace or prefix value_sep, based on value_escape_type'],
+        ['sepline_sep', 'str', 'crossing separator'],
+        ['sepline_char', 'str', 'horizontal separator']
+    ]
 
     def __init__(self,
                  columns_name: List[str],
