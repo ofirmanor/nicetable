@@ -93,8 +93,7 @@ Note that the `default` layout adjusts the column values with `auto` adjustment:
 For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all printed well-aligned.
 
 ## Other options
-TODO
-
+TODO  
 get_column(...)  <-- get a `List` of values
 
 *exceptions*
@@ -105,13 +104,13 @@ out.append(1231)
 out.set_col... (index out of bound)  
 
 ## Formatting settings
+You can override most formatting settings  by directly setting a value to their instance variable, for example:  
+`out.header = False`   
 
-`out.header = False`  
-`out.set_col_adjust('Type','center')`   *(set a column property by name)*  
-`out.set_col_adjust(1,'center')`   *(set a column property by position)* 
+*The only exception is column-level settings, which are explained in the next section.*  
 
+Here is the list of formatting settings:
 
-|---------------------|--------|---------------------------------------------------------------------------------------------|
 |  Setting            |  Type  |  Description                                                                                |
 |---------------------|--------|---------------------------------------------------------------------------------------------|
 |  header             |  bool  |  whether the table header will be printed                                                   |
@@ -129,7 +128,19 @@ out.set_col... (index out of bound)
 |  cell_spacing       |  int   |  number of spaces to add to each side of a value                                            |
 |  value_none_string  |  str   |  string representation of the None value                                                    |
 |  value_escape_type  |  str   |  handling of sep_vertical inside a value, one of ['remove', 'replace', 'prefix', 'ignore']  |
-|  value_escape_char  |  str   |  a string to replace or prefix sep_vertical, based on value_escape_type                     |
+|  value_escape_char  |  str   |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                 |
 
+*The table above was generated with this code:*
+````python
+from nicetable import NiceTable
 
+out = NiceTable(['Setting', 'Type', 'Description'], layout='md')
+for setting in NiceTable.FORMATTING_SETTINGS:
+    out.append(setting)
+print(out)
+````
 
+#### Column-level settings
+TODO  
+`out.set_col_adjust('Type','center')`   *(set a column property by name)*  
+`out.set_col_adjust(1,'center')`   *(set a column property by position)* 

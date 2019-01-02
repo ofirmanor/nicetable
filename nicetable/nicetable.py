@@ -52,7 +52,7 @@ class NiceTable:
         ['cell_spacing', 'int', 'number of spaces to add to each side of a value'],
         ['value_none_string', 'str', 'string representation of the None value'],
         ['value_escape_type', 'str', f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
-        ['value_escape_char', 'str', 'a string to replace or prefix sep_vertical, based on value_escape_type']
+        ['value_escape_char', 'str', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
     ]
 
     def __init__(self,
@@ -219,14 +219,14 @@ class NiceTable:
         """comma-separated values with a one-line header."""
         self.header_sepline = False
         self.header_adjust = 'compact'
-        self.cell_adjust = 'compact'
         self.sep_vertical = ','
-        self.cell_spacing = 0
-        self.value_escape_type = 'remove'
         self.border_top = False
         self.border_bottom = False
         self.border_left = False
         self.border_right = False
+        self.cell_adjust = 'compact'
+        self.cell_spacing = 0
+        self.value_escape_type = 'remove'
 
     def _layout_as_tsv(self) -> None:
         """tab-separated values with a one-line header."""
@@ -243,10 +243,11 @@ class NiceTable:
         """for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github."""
         # https://github.github.com/gfm/#tables-extension-
         # TODO (md layout) left align the values, use header marker for alignment (:--- :--: ---:)
+        self.border_top = False
+        self.border_bottom = False
         self.sep_cross = '|'
         self.value_escape_type = 'prefix'
         self.value_escape_char = '\\'
-        self.border_bottom = False
         self.cell_min_len = 3
 
     def __str__(self):
