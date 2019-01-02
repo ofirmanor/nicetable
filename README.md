@@ -1,5 +1,4 @@
 # nicetable
-
 * A clean and elegant way to print tables in Python with minimal boilerplate code.
 * Built with modern Python, including type annotations. Requires Python 3.6 and up.
 
@@ -40,7 +39,7 @@ print(out)
 |  csv      |  comma-separated values with a one-line header.                                                      |
 |  default  |  fixed-width table with data auto-alignment.                                                         |
 |  grep     |  tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc.  |
-|  md       |  for tables inside Markmown(.md) files. Uses the GFM table extension. Ex: README.md on github.       |
+|  md       |  for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github.      |
 |  tsv      |  tab-separated values with a one-line header.                                                        |
 +-----------+------------------------------------------------------------------------------------------------------+
 ````
