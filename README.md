@@ -64,7 +64,7 @@ for pokemon in json.loads(NiceTable.SAMPLE_JSON):
 print('-- default format --\n')
 print(out)
 out.layout = 'csv'
-out.value_sep = '|'
+out.sep_vertical = '|'
 print('-- CSV with a pipe separator --\n')
 print(out)
 `````
@@ -106,8 +106,30 @@ out.set_col... (index out of bound)
 
 ## Formatting settings
 
-
-
 `out.header = False`  
 `out.set_col_adjust('Type','center')`   *(set a column property by name)*  
 `out.set_col_adjust(1,'center')`   *(set a column property by position)* 
+
+
+|---------------------|--------|---------------------------------------------------------------------------------------------|
+|  Setting            |  Type  |  Description                                                                                |
+|---------------------|--------|---------------------------------------------------------------------------------------------|
+|  header             |  bool  |  whether the table header will be printed                                                   |
+|  header_sepline     |  bool  |  if the header is printed, whether a sepline will be printed after it                       |
+|  header_adjust      |  str   |  adjust of the column names, one of ['auto', 'left', 'center', 'right', 'compact']          |
+|  sep_vertical       |  str   |  a vertical separator string                                                                |
+|  sep_horizontal     |  str   |  a horizontal separator string                                                              |
+|  sep_cross          |  str   |  a crossing separator (where vertical and horizontal separators meet)                       |
+|  border_top         |  bool  |  whether the table top border will be printed                                               |
+|  border_bottom      |  bool  |  whether the table bottom border will be printed                                            |
+|  border_left        |  bool  |  whether the table left border will be printed                                              |
+|  border_right       |  bool  |  whether the table right border will be printed                                             |
+|  cell_adjust        |  str   |  adjust of the values, one of ['auto', 'left', 'center', 'right', 'compact']                |
+|  cell_min_len       |  int   |  minimal string length of a value (shorter value will be space-padded                       |
+|  cell_spacing       |  int   |  number of spaces to add to each side of a value                                            |
+|  value_none_string  |  str   |  string representation of the None value                                                    |
+|  value_escape_type  |  str   |  handling of sep_vertical inside a value, one of ['remove', 'replace', 'prefix', 'ignore']  |
+|  value_escape_char  |  str   |  a string to replace or prefix sep_vertical, based on value_escape_type                     |
+
+
+

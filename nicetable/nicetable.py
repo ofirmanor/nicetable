@@ -40,19 +40,19 @@ class NiceTable:
         ['header', 'bool', 'whether the table header will be printed'],
         ['header_sepline', 'bool', 'if the header is printed, whether a sepline will be printed after it'],
         ['header_adjust', 'str', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
-        ['top_border', 'bool', 'whether the table top border will be printed'],
-        ['bottom_border', 'bool', 'whether the table bottom border will be printed'],
-        ['left_border', 'bool', 'whether the table left border will be printed'],
-        ['right_border', 'bool', 'whether the table right border will be printed'],
-        ['data_adjust', 'str', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
-        ['data_min_len', 'int', 'minimal string length of a value (shorter value will be space-padded'],
-        ['data_none_string', 'str', 'string representation of the None value'],
-        ['value_spacing', 'int', 'number of spaces to add to each side of a value'],
-        ['value_sep', 'str', 'a string that separates values / column names'],
-        ['value_escape_type', 'str', f'handling of value_sep inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
-        ['value_escape_char', 'str', 'a string to replace or prefix value_sep, based on value_escape_type'],
-        ['sepline_sep', 'str', 'crossing separator'],
-        ['sepline_char', 'str', 'horizontal separator']
+        ['sep_vertical', 'str', 'a vertical separator string'],
+        ['sep_horizontal', 'str', 'a horizontal separator string'],
+        ['sep_cross', 'str', 'a crossing separator (where vertical and horizontal separators meet)'],
+        ['border_top', 'bool', 'whether the table top border will be printed'],
+        ['border_bottom', 'bool', 'whether the table bottom border will be printed'],
+        ['border_left', 'bool', 'whether the table left border will be printed'],
+        ['border_right', 'bool', 'whether the table right border will be printed'],
+        ['cell_adjust', 'str', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
+        ['cell_min_len', 'int', 'minimal string length of a value (shorter value will be space-padded'],
+        ['cell_spacing', 'int', 'number of spaces to add to each side of a value'],
+        ['value_none_string', 'str', 'string representation of the None value'],
+        ['value_escape_type', 'str', f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
+        ['value_escape_char', 'str', 'a string to replace or prefix sep_vertical, based on value_escape_type']
     ]
 
     def __init__(self,
@@ -61,37 +61,37 @@ class NiceTable:
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
                  header_adjust: Optional[str] = None,
-                 top_border: Optional[bool] = None,
-                 bottom_border: Optional[bool] = None,
-                 left_border: Optional[bool] = None,
-                 right_border: Optional[bool] = None,
-                 data_adjust: Optional[str] = None,
-                 data_min_len: Optional[int] = None,
-                 data_none_string: Optional[str] = None,
-                 value_spacing: Optional[int] = None,
-                 value_sep: Optional[str] = None,
+                 sep_vertical: Optional[str] = None,
+                 sep_horizontal: Optional[str] = None,
+                 sep_cross: Optional[str] = None,
+                 border_top: Optional[bool] = None,
+                 border_bottom: Optional[bool] = None,
+                 border_left: Optional[bool] = None,
+                 border_right: Optional[bool] = None,
+                 cell_adjust: Optional[str] = None,
+                 cell_min_len: Optional[int] = None,
+                 cell_spacing: Optional[int] = None,
+                 value_none_string: Optional[str] = None,
                  value_escape_type: Optional[str] = None,
-                 value_escape_char: Optional[str] = None,
-                 sepline_sep: Optional[str] = None,
-                 sepline_char: Optional[str] = None):
+                 value_escape_char: Optional[str] = None):
         self._set_formatting_defaults()
         self.layout = coalesce(layout, 'default')
         self.header = coalesce(header, self.header)
         self.header_sepline = coalesce(header_sepline, self.header_sepline)
         self.header_adjust = coalesce(header_adjust, self.header_adjust)
-        self.top_border = coalesce(top_border, self.top_border)
-        self.bottom_border = coalesce(bottom_border, self.bottom_border)
-        self.left_border = coalesce(left_border, self.left_border)
-        self.right_border = coalesce(right_border, self.right_border)
-        self.data_adjust = coalesce(data_adjust, self.data_adjust)
-        self.data_min_len = coalesce(data_min_len, self.data_min_len)
-        self.data_none_string = coalesce(data_none_string, self.data_none_string)
-        self.value_spacing = coalesce(value_spacing, self.value_spacing)
-        self.value_sep = coalesce(value_sep, self.value_sep)
+        self.sep_vertical = coalesce(sep_vertical, self.sep_vertical)
+        self.sep_horizontal = coalesce(sep_horizontal, self.sep_horizontal)
+        self.sep_cross = coalesce(sep_cross, self.sep_cross)
+        self.border_top = coalesce(border_top, self.border_top)
+        self.border_bottom = coalesce(border_bottom, self.border_bottom)
+        self.border_left = coalesce(border_left, self.border_left)
+        self.border_right = coalesce(border_right, self.border_right)
+        self.cell_adjust = coalesce(cell_adjust, self.cell_adjust)
+        self.cell_min_len = coalesce(cell_min_len, self.cell_min_len)
+        self.cell_spacing = coalesce(cell_spacing, self.cell_spacing)
+        self.value_none_string = coalesce(value_none_string, self.value_none_string)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
-        self.sepline_sep = coalesce(sepline_sep, self.sepline_sep)
-        self.sepline_char = coalesce(sepline_char, self.sepline_char)
         # initialize the rest of the instance variables to represent an empty table
         self.columns = []
         self.col_names = []
@@ -102,7 +102,7 @@ class NiceTable:
         self.col_digits_right = []   # per column: max number of digits in a number after the period
         for name in columns_name:
             self.columns.append([])
-            self.col_names.append(self.data_none_string if name is None else name)
+            self.col_names.append(self.value_none_string if name is None else name)
             self.col_adjust.append(None)
             self.col_widths.append(len(str(name)))
             self.col_funcs.append(None)
@@ -145,19 +145,19 @@ class NiceTable:
         self.header = True
         self.header_sepline = True
         self.header_adjust = 'left'
-        self.top_border = True
-        self.bottom_border = True
-        self.left_border = True
-        self.right_border = True
-        self.data_adjust = 'auto'
-        self.data_min_len = 1
-        self.data_none_string = '<None>'
-        self.value_spacing = 2
-        self.value_sep = '|'
+        self.sep_vertical = '|'
+        self.sep_horizontal = '-'
+        self.sep_cross = '+'
+        self.border_top = True
+        self.border_bottom = True
+        self.border_left = True
+        self.border_right = True
+        self.cell_adjust = 'auto'
+        self.cell_min_len = 1
+        self.cell_spacing = 2
+        self.value_none_string = '<None>'
         self.value_escape_type = 'ignore'
         self.value_escape_char = '\\'
-        self.sepline_sep = '+'
-        self.sepline_char = '-'
 
     @property
     def value_escape_type(self):
@@ -165,9 +165,9 @@ class NiceTable:
 
     @value_escape_type.setter
     def value_escape_type(self, value_escape_type: str) -> None:
-        if value_escape_type not in NiceTable._VALUE_ESCAPING_OPTIONS:
+        if value_escape_type not in self._VALUE_ESCAPING_OPTIONS:
             raise ValueError(f'Unknown value escape type "{value_escape_type}", ' 
-                             f'should be one of {NiceTable._VALUE_ESCAPING_OPTIONS}')
+                             f'should be one of {self._VALUE_ESCAPING_OPTIONS}')
         self._value_escape_type = value_escape_type
 
     @property
@@ -176,21 +176,21 @@ class NiceTable:
 
     @header_adjust.setter
     def header_adjust(self, adjust: str) -> None:
-        if adjust not in NiceTable._ADJUST_OPTIONS:
+        if adjust not in self._ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one of {NiceTable._ADJUST_OPTIONS}')
+                             f'should be one of {self._ADJUST_OPTIONS}')
         self._header_adjust = adjust
 
     @property
-    def data_adjust(self):
-        return self._data_adjust
+    def cell_adjust(self):
+        return self._cell_adjust
 
-    @data_adjust.setter
-    def data_adjust(self, adjust: str) -> None:
-        if adjust not in NiceTable._ADJUST_OPTIONS:
+    @cell_adjust.setter
+    def cell_adjust(self, adjust: str) -> None:
+        if adjust not in self._ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one of {NiceTable._ADJUST_OPTIONS}')
-        self._data_adjust = adjust
+                             f'should be one of {self._ADJUST_OPTIONS}')
+        self._cell_adjust = adjust
 
     @property
     def layout(self):
@@ -198,15 +198,16 @@ class NiceTable:
 
     @layout.setter
     def layout(self, layout: str) -> None:
+        valid_layouts = list(x[0] for x in self.builtin_layouts())
+        if layout not in valid_layouts:
+            raise ValueError(f'Unknown table layout "{layout}", should be one of {valid_layouts}')
+
         prefix = '_layout_as_'
-        layout_funcs = [x[len(prefix):] for x in dir(self) if x.startswith(prefix)]
-        if layout not in layout_funcs:
-            raise ValueError(f'Unknown table layout "{layout}", should be one of {layout_funcs}')
         getattr(self, prefix + layout)()  # calls the proper "_layout_as_*" function
         self._layout = layout
 
     @classmethod
-    def builtin_layouts(cls):
+    def builtin_layouts(cls) -> List[List[str]]:
         prefix = '_layout_as_'
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
@@ -218,73 +219,73 @@ class NiceTable:
         """comma-separated values with a one-line header."""
         self.header_sepline = False
         self.header_adjust = 'compact'
-        self.data_adjust = 'compact'
-        self.value_sep = ','
-        self.value_spacing = 0
+        self.cell_adjust = 'compact'
+        self.sep_vertical = ','
+        self.cell_spacing = 0
         self.value_escape_type = 'remove'
-        self.top_border = False
-        self.bottom_border = False
-        self.left_border = False
-        self.right_border = False
+        self.border_top = False
+        self.border_bottom = False
+        self.border_left = False
+        self.border_right = False
 
     def _layout_as_tsv(self) -> None:
         """tab-separated values with a one-line header."""
         self._layout_as_csv()
-        self.value_sep = '\t'
+        self.sep_vertical = '\t'
 
     def _layout_as_grep(self) -> None:
         """tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc."""
         self._layout_as_csv()
-        self.value_sep = '\t'
+        self.sep_vertical = '\t'
         self.header = False
 
     def _layout_as_md(self) -> None:
         """for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github."""
         # https://github.github.com/gfm/#tables-extension-
         # TODO (md layout) left align the values, use header marker for alignment (:--- :--: ---:)
-        self.sepline_sep = '|'
+        self.sep_cross = '|'
         self.value_escape_type = 'prefix'
         self.value_escape_char = '\\'
-        self.bottom_border = False
-        self.data_min_len = 3
+        self.border_bottom = False
+        self.cell_min_len = 3
 
     def __str__(self):
         out = []
         sep_line = self._generate_sepline()
-        if self.top_border:
+        if self.border_top:
             out.append(sep_line)
         if self.header:
             out.append(self._generate_header_line())
             if self.header_sepline:
                 out.append(sep_line)
         out += self._generate_data_lines()
-        if self.bottom_border:
+        if self.border_bottom:
             out.append(sep_line)
         return '\n'.join(out) + '\n'
 
-    def _get_value_separator(self) -> str:
-        """ computes the separator of elements for a line of values, for example '  |  ' """
-        return f'{" " * self.value_spacing}{self.value_sep}{" " * self.value_spacing}'
+    def _get_value_sep(self) -> str:
+        """ computes the separator string between cells, for example '  |  ' """
+        return f'{" " * self.cell_spacing}{self.sep_vertical}{" " * self.cell_spacing}'
 
-    def _get_sepline_separator(self) -> str:
+    def get_sepline_sep(self) -> str:
         """ computes the separator of elements for a separator line, for example '--+--' """
-        return f'{self.sepline_char * self.value_spacing}{self.sepline_sep}{self.sepline_char * self.value_spacing}'
+        return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
     def _formatted_element(self, element: Any, adjust: str, pos: int, is_header: bool) -> str:
         """Format a string based on a pre-function, an adjustment, value escaping and column properties"""
         processed_element = element if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](element)
         if self.value_escape_type == 'remove':
-            escaped_str_element = str(processed_element).replace(self.value_sep, '')
+            escaped_str_element = str(processed_element).replace(self.sep_vertical, '')
         elif self.value_escape_type == 'replace':
-            escaped_str_element = str(processed_element).replace(self.value_sep, self.value_escape_char)
+            escaped_str_element = str(processed_element).replace(self.sep_vertical, self.value_escape_char)
         elif self.value_escape_type == 'prefix':
             escaped_str_element = str(processed_element).\
-                replace(self.value_sep, self.value_escape_char + self.value_sep)
+                replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
         else:  # 'ignore'
             escaped_str_element = str(processed_element)
 
-        escaped_str_element = self.data_none_string if processed_element is None else escaped_str_element
-        col_len = max(self.col_widths[pos], self.data_min_len)
+        escaped_str_element = self.value_none_string if processed_element is None else escaped_str_element
+        col_len = max(self.col_widths[pos], self.cell_min_len)
         if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right (well-aligned)
             out = escaped_str_element.rjust(col_len)
         elif adjust == 'center':
@@ -298,18 +299,18 @@ class NiceTable:
             else:
                 out = escaped_str_element.ljust(col_len)
         else:  # compact
-            out = escaped_str_element.ljust(self.data_min_len)
+            out = escaped_str_element.ljust(self.cell_min_len)
         return out
 
     def _formatted_column_name(self, pos: int) -> str:
         return self._formatted_element(self.col_names[pos], self.header_adjust, pos, True)
 
     def _formatted_value(self, pos: int, value: Any) -> str:
-        return self._formatted_element(value, self.col_adjust[pos] or self.data_adjust, pos, False)
+        return self._formatted_element(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
 
-    def _wrap_data_with_borders(self, line: str) -> str:
-        left_border = f'{self.value_sep}{" " * self.value_spacing}' if self.left_border else ''
-        right_border = f'{" " * self.value_spacing}{self.value_sep}' if self.right_border else ''
+    def _wrap_line_with_borders(self, line: str) -> str:
+        left_border = f'{self.sep_vertical}{" " * self.cell_spacing}' if self.border_left else ''
+        right_border = f'{" " * self.cell_spacing}{self.sep_vertical}' if self.border_right else ''
         return f'{left_border}{line}{right_border}'
 
     def _generate_header_line(self) -> str:
@@ -317,16 +318,16 @@ class NiceTable:
         formatted_header_elements = []
         for i in range(len(self.col_names)):
             formatted_header_elements.append(self._formatted_column_name(i))
-        return self._wrap_data_with_borders(self._get_value_separator().join(formatted_header_elements))
+        return self._wrap_line_with_borders(self._get_value_sep().join(formatted_header_elements))
 
     def _generate_sepline(self) -> str:
         """Generate header lines as list of lines"""
         out, sep_elements = [], []
         for i in range(len(self.col_names)):
-            sep_elements.append(self.sepline_char * len(self._formatted_column_name(i)))
-        left_border = f'{self.sepline_sep}{self.sepline_char * self.value_spacing}' if self.left_border else ''
-        right_border = f'{self.sepline_char * self.value_spacing}{self.sepline_sep}' if self.right_border else ''
-        return left_border + self._get_sepline_separator().join(sep_elements) + right_border
+            sep_elements.append(self.sep_horizontal * len(self._formatted_column_name(i)))
+        left_border = f'{self.sep_cross}{self.sep_horizontal * self.cell_spacing}' if self.border_left else ''
+        right_border = f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}' if self.border_right else ''
+        return left_border + self.get_sepline_sep().join(sep_elements) + right_border
 
     def _generate_data_lines(self) -> List[str]:
         """Generate data lines as list of lines"""
@@ -335,13 +336,13 @@ class NiceTable:
             output_elements = []
             for col in range(self.total_cols):
                 output_elements.append(self._formatted_value(col, self.columns[col][line]))
-            out.append(self._wrap_data_with_borders(self._get_value_separator().join(x for x in output_elements)))
+            out.append(self._wrap_line_with_borders(self._get_value_sep().join(output_elements)))
         return out
 
     def set_col_adjust(self, col: Union[int, str], adjust: str) -> None:
-        if adjust not in NiceTable._ADJUST_OPTIONS:
+        if adjust not in self._ADJUST_OPTIONS:
             raise ValueError('NiceTable.set_col_adjust(): '
-                             f'got adjust value "{adjust}", expecting one of {NiceTable._ADJUST_OPTIONS}')
+                             f'got adjust value "{adjust}", expecting one of {self._ADJUST_OPTIONS}')
         if isinstance(col, int):
             # noinspection PyTypeChecker
             self.col_adjust[col] = adjust

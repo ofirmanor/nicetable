@@ -14,7 +14,7 @@ for pokemon in json.loads(NiceTable.SAMPLE_JSON):
 print('-- default format --\n')
 print(out)
 out.layout = 'csv'
-out.value_sep = '|'
+out.sep_vertical = '|'
 print('-- CSV with a pipe separator --\n')
 print(out)
 
@@ -46,9 +46,9 @@ t.data_adjust = 'auto'
 class MyNiceTable(NiceTable):
     def _layout_as_winter_columns(self) -> None:
         """Table with a winter-themed separator. Quite Ugly."""
-        self.value_sep = '❄☂🌧☂❄'
-        self.sepline_sep = '❄☂🌧☂❄'
-        self.sepline_char = 'ˣ'
+        self.sep_vertical = '❄☂🌧☂❄'
+        self.sep_cross = '❄☂🌧☂❄'
+        self.sep_horizontal = 'ˣ'
 
 
 out = MyNiceTable(['Layout', 'Description'], layout='winter_columns')
