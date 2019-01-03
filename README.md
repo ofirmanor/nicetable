@@ -134,7 +134,7 @@ Here is the list of formatting settings:
 out = NiceTable(['Setting', 'Type', 'Default', 'Description'], layout='md')
 for setting in NiceTable.FORMATTING_SETTINGS:
     out.append(setting)
-out.set_col_adjust('Default','left')
+out.set_col_adjust('Default', 'left')
 print(out)
 ````
 
