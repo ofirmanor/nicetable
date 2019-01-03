@@ -50,7 +50,7 @@ class NiceTable:
         ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
         ['cell_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
-        ['value_none_string', 'str', '<NONE>', 'string representation of the None value'],
+        ['value_none_string', 'str', '<None>', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
             f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
@@ -143,22 +143,27 @@ class NiceTable:
 
     def _set_formatting_defaults(self):
         """ creates all instance variables and and initializes them to a default """
-        self.header = True
-        self.header_sepline = True
-        self.header_adjust = 'left'
-        self.sep_vertical = '|'
-        self.sep_horizontal = '-'
-        self.sep_cross = '+'
-        self.border_top = True
-        self.border_bottom = True
-        self.border_left = True
-        self.border_right = True
-        self.cell_adjust = 'auto'
-        self.cell_min_len = 1
-        self.cell_spacing = 2
-        self.value_none_string = '<None>'
-        self.value_escape_type = 'ignore'
-        self.value_escape_char = '\\'
+
+        def get_default(var_name: str) -> str:
+            """picking defaults from FORMATTING_SETTINGS so code and documentation are in-sync"""
+            return next(setting[2] for setting in self.FORMATTING_SETTINGS if setting[0] == var_name)
+
+        self.header = get_default('header')
+        self.header_sepline = get_default('header_sepline')
+        self.header_adjust = get_default('header_adjust')
+        self.sep_vertical = get_default('sep_vertical')
+        self.sep_horizontal = get_default('sep_horizontal')
+        self.sep_cross = get_default('sep_cross')
+        self.border_top = get_default('border_top')
+        self.border_bottom = get_default('border_bottom')
+        self.border_left = get_default('border_left')
+        self.border_right = get_default('border_right')
+        self.cell_adjust = get_default('cell_adjust')
+        self.cell_min_len = get_default('cell_min_len')
+        self.cell_spacing = get_default('cell_spacing')
+        self.value_none_string = get_default('value_none_string')
+        self.value_escape_type = get_default('value_escape_type')
+        self.value_escape_char = get_default('value_escape_char')
 
     @property
     def value_escape_type(self):
