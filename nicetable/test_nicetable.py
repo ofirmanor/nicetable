@@ -124,19 +124,19 @@ class LayoutOptions(TestCase):
     def test__cell_adjust(self):
         self.tbl.cell_adjust = 'left'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|  Pikachu    |  Electric      |  40          |  6.1         |',
+        self.assertEqual('|  Pikachu    |  Electric      |    40        |    6.100     |',
                          data_line,
                          'Left-adjusted data')
 
         self.tbl.cell_adjust = 'center'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|   Pikachu   |    Electric    |      40      |     6.1      |',
+        self.assertEqual('|   Pikachu   |    Electric    |       40     |     6.100    |',
                          data_line,
                          'Center-adjusted data')
 
         self.tbl.cell_adjust = 'right'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|    Pikachu  |      Electric  |          40  |         6.1  |',
+        self.assertEqual('|    Pikachu  |      Electric  |          40  |       6.100  |',
                          data_line,
                          'Right-adjusted data')
 
@@ -148,7 +148,7 @@ class LayoutOptions(TestCase):
 
         self.tbl.cell_adjust = 'compact'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|  Pikachu  |  Electric  |  40  |  6.1  |',
+        self.assertEqual('|  Pikachu  |  Electric  |  40  |  6.100  |',
                          data_line,
                          'compact data (cell_spacing == 2) still applies')
 
@@ -168,16 +168,18 @@ class LayoutOptions(TestCase):
     def test__value_none_string__header(self):
         self.tbl.col_names[1] = None
         self.tbl.columns[1][1] = None
+        self.tbl.columns[2][1] = None
 
-        data_cols = self.default_to_cols_lines()
-        self.assertEqual('<None>',
+        header_line = str(self.tbl).splitlines()[1]
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('N/A',
                          self.tbl.value_none_string,
-                         'default field name for None is <None>')
-        self.assertEqual(self.tbl.value_none_string,
-                         data_cols[1][0].strip(),
+                         'default field name for None is N/A')
+        self.assertEqual('|  Name       |  N/A           |  Height(cm)  |  Weight(kg)  |',
+                         header_line,
                          'None value for a field name should become self.value_none_string')
-        self.assertEqual(self.tbl.value_none_string,
-                         data_cols[1][2].strip(),
+        self.assertEqual('|  Pikachu    |  N/A           |         N/A  |       6.100  |',
+                         data_line,
                          'None value in data should become self.value_none_string')
 
         self.tbl.col_names[1] = 'Type'
@@ -275,6 +277,6 @@ class LayoutOptions(TestCase):
         self.assertEqual(['BULBASAUR', 'PIKACHU', 'MEWTWO'],
                          list(value.strip() for value in data_cols[0][1:]),
                          'applying this function should result in uppercase values')
-        self.assertEqual(['grass/poison', '<None>', 'psychic'],
+        self.assertEqual(['grass/poison', 'N/A', 'psychic'],
                          list(value.strip() for value in data_cols[1][1:]),
                          'applying this function should result in lowercase / None values')

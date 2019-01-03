@@ -31,13 +31,14 @@ class NiceTable:
         '{"id": "150", "name":"Mewtwo","type":"Psychic","height":200,"weight":122}' + \
         ']'
 
-    _ADJUST_OPTIONS = ['auto', 'left', 'center', 'right', 'compact']
+    _MINIMAL_ADJUST_OPTIONS = ['left', 'center', 'right', 'compact']
+    _FULL_ADJUST_OPTIONS = ['auto'] + _MINIMAL_ADJUST_OPTIONS
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
 
     FORMATTING_SETTINGS = [
         ['header', 'bool', True, 'whether the table header will be printed'],
         ['header_sepline', 'bool', True, 'if the header is printed, whether a sepline will be printed after it'],
-        ['header_adjust', 'str', 'left', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
+        ['header_adjust', 'str', 'left', f'adjust of the column names, one of {_MINIMAL_ADJUST_OPTIONS}'],
         ['sep_vertical', 'str', '|', 'a vertical separator string'],
         ['sep_horizontal', 'str', '-', 'a horizontal separator string'],
         ['sep_cross', 'str', '+', 'a crossing separator string (where vertical and horizontal separators meet)'],
@@ -45,10 +46,10 @@ class NiceTable:
         ['border_bottom', 'bool', True, 'whether the table bottom border will be printed'],
         ['border_left', 'bool', True, 'whether the table left border will be printed'],
         ['border_right', 'bool', True, 'whether the table right border will be printed'],
-        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
+        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {_FULL_ADJUST_OPTIONS}'],
         ['cell_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
-        ['value_none_string', 'str', '<None>', 'string representation of the None value'],
+        ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
             f'handling of `sep_vertical` inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
@@ -160,9 +161,9 @@ class NiceTable:
 
     @header_adjust.setter
     def header_adjust(self, adjust: str) -> None:
-        if adjust not in self._ADJUST_OPTIONS:
+        if adjust not in self._MINIMAL_ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one of {self._ADJUST_OPTIONS}')
+                             f'should be one of {self._MINIMAL_ADJUST_OPTIONS}')
         self._header_adjust = adjust
 
     @property
@@ -171,9 +172,9 @@ class NiceTable:
 
     @cell_adjust.setter
     def cell_adjust(self, adjust: str) -> None:
-        if adjust not in self._ADJUST_OPTIONS:
+        if adjust not in self._FULL_ADJUST_OPTIONS:
             raise ValueError(f'Unknown adjust "{adjust}", '
-                             f'should be one of {self._ADJUST_OPTIONS}')
+                             f'should be one of {self._FULL_ADJUST_OPTIONS}')
         self._cell_adjust = adjust
 
     @property
@@ -285,41 +286,43 @@ class NiceTable:
         """ computes the separator of elements for a separator line, for example '--+--' """
         return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
-    def _formatted_element(self, element: Any, adjust: str, pos: int, is_header: bool) -> str:
-        """Format a string based on a pre-function, an adjustment, value escaping and column properties"""
-        processed_element = element if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](element)
-        if self.value_escape_type == 'remove':
-            escaped_str_element = str(processed_element).replace(self.sep_vertical, '')
-        elif self.value_escape_type == 'replace':
-            escaped_str_element = str(processed_element).replace(self.sep_vertical, self.value_escape_char)
-        elif self.value_escape_type == 'prefix':
-            escaped_str_element = str(processed_element).\
-                replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
-        else:  # 'ignore'
-            escaped_str_element = str(processed_element)
+    def _to_value_str(self, value: Any, pos: int, is_header: bool) -> str:
+        """Convert value to unadjusted string"""
+        processed_value = value if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](value)
+        if processed_value is None:
+            return self.value_none_string
 
-        escaped_str_element = self.value_none_string if processed_element is None else escaped_str_element
+        if isinstance(processed_value, numbers.Number): # for numbers, the adjust effects how the string is generated
+            target_length = self.col_digits_left[pos] + self.col_digits_right[pos] + 1
+            return f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(target_length)
+
+        if self.value_escape_type == 'remove':
+            return str(processed_value).replace(self.sep_vertical, '')
+        elif self.value_escape_type == 'replace':
+            return str(processed_value).replace(self.sep_vertical, self.value_escape_char)
+        elif self.value_escape_type == 'prefix':
+            return str(processed_value).replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
+        else:  # 'ignore'
+            return str(processed_value)
+
+    def _to_cell_str(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> str:
+        """Convert a string value to a cell-adjusted string"""
+        str_value = self._to_value_str(value, pos, is_header)
         col_len = max(self.col_widths[pos], self.cell_min_len)
-        if adjust == 'right':  # TODO: add numeric_left / numeric_center / numeric_right (well-aligned)
-            out = escaped_str_element.rjust(col_len)
+        if adjust == 'right' or (adjust == 'auto' and self.col_is_numeric[pos]):
+            return str_value.rjust(col_len)
         elif adjust == 'center':
-            out = escaped_str_element.center(col_len)
-        elif adjust == 'left':
-            out = escaped_str_element.ljust(col_len)
-        elif adjust == 'auto':
-            if not is_header and self.col_is_numeric[pos]:
-                out = f'{processed_element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
-            else:
-                out = escaped_str_element.ljust(col_len)
+            return str_value.center(col_len)
+        elif adjust in ['left', 'auto']:
+            return str_value.ljust(col_len)
         else:  # compact
-            out = escaped_str_element.ljust(self.cell_min_len)
-        return out
+            return str_value.strip().ljust(self.cell_min_len)
 
     def _formatted_column_name(self, pos: int) -> str:
-        return self._formatted_element(self.col_names[pos], self.header_adjust, pos, True)
+        return self._to_cell_str(self.col_names[pos], self.header_adjust, pos, True)
 
     def _formatted_value(self, pos: int, value: Any) -> str:
-        return self._formatted_element(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
+        return self._to_cell_str(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
 
     def _wrap_line_with_borders(self, line: str) -> str:
         left_border = f'{self.sep_vertical}{" " * self.cell_spacing}' if self.border_left else ''
