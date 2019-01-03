@@ -10,7 +10,7 @@ setup(
     python_requires='>=3.6',
     author='Ofir Manor',
     author_email='ofir.manor@gmail.com',
-    description='A clean and elegant way to print tables in Python with minimal boilerplate code',
+    description='A clean and elegant way to print text tables in Python with minimal boilerplate code',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url='https://github.com/ofirmanor/nicetable',
