@@ -56,7 +56,8 @@ for layout in MyNiceTable.builtin_layouts():
     out.append(layout)
 print(out)
 
-out = NiceTable(['Setting', 'Type', 'Description'], layout='md')
+out = NiceTable(['Setting', 'Type', 'Default', 'Description'], layout='md')
 for setting in NiceTable.FORMATTING_SETTINGS:
     out.append(setting)
+out.set_col_adjust('Default','left')
 print(out)

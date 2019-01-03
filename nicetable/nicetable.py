@@ -37,22 +37,23 @@ class NiceTable:
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
 
     FORMATTING_SETTINGS = [
-        ['header', 'bool', 'whether the table header will be printed'],
-        ['header_sepline', 'bool', 'if the header is printed, whether a sepline will be printed after it'],
-        ['header_adjust', 'str', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
-        ['sep_vertical', 'str', 'a vertical separator string'],
-        ['sep_horizontal', 'str', 'a horizontal separator string'],
-        ['sep_cross', 'str', 'a crossing separator (where vertical and horizontal separators meet)'],
-        ['border_top', 'bool', 'whether the table top border will be printed'],
-        ['border_bottom', 'bool', 'whether the table bottom border will be printed'],
-        ['border_left', 'bool', 'whether the table left border will be printed'],
-        ['border_right', 'bool', 'whether the table right border will be printed'],
-        ['cell_adjust', 'str', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
-        ['cell_min_len', 'int', 'minimal string length of a value (shorter value will be space-padded'],
-        ['cell_spacing', 'int', 'number of spaces to add to each side of a value'],
-        ['value_none_string', 'str', 'string representation of the None value'],
-        ['value_escape_type', 'str', f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
-        ['value_escape_char', 'str', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
+        ['header', 'bool',True, 'whether the table header will be printed'],
+        ['header_sepline', 'bool', True, 'if the header is printed, whether a sepline will be printed after it'],
+        ['header_adjust', 'str', 'left', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
+        ['sep_vertical', 'str', '|', 'a vertical separator string'],
+        ['sep_horizontal', 'str', '-', 'a horizontal separator string'],
+        ['sep_cross', 'str', '+', 'a crossing separator string (where vertical and horizontal separators meet)'],
+        ['border_top', 'bool', True, 'whether the table top border will be printed'],
+        ['border_bottom', 'bool', True, 'whether the table bottom border will be printed'],
+        ['border_left', 'bool', True, 'whether the table left border will be printed'],
+        ['border_right', 'bool', True, 'whether the table right border will be printed'],
+        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {_ADJUST_OPTIONS}'],
+        ['cell_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded'],
+        ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
+        ['value_none_string', 'str', '<NONE>', 'string representation of the None value'],
+        ['value_escape_type', 'str', 'ignore',
+            f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
+        ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
     ]
 
     def __init__(self,
