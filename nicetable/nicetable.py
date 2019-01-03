@@ -1,5 +1,5 @@
 import numbers
-from typing import List, Union, Optional, Callable, Any
+from typing import List, Union, Optional, Callable, Any, Tuple
 
 from aux_functions import *
 
@@ -8,14 +8,12 @@ class NiceTable:
     """A helper class that let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO: refactor all... data --> value value --> cell
         TODO import table directly from dictionary / JSON
         TODO integrate with SQL result set
         TODO finish unittests for coverage
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO add / remove column (data);  hide / show column (print)
     FORMATTING
-        TODO move column-width computation to __str__ to handle corner cases like changing None representation etc
         TODO custom value quoting (wrapper) like ""
         TODO let the user directly change column wi dth - handle "too short"? (ignore or text wrap)
         TODO (idea) ASCII color for headers
@@ -37,7 +35,7 @@ class NiceTable:
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
 
     FORMATTING_SETTINGS = [
-        ['header', 'bool',True, 'whether the table header will be printed'],
+        ['header', 'bool', True, 'whether the table header will be printed'],
         ['header_sepline', 'bool', True, 'if the header is printed, whether a sepline will be printed after it'],
         ['header_adjust', 'str', 'left', f'adjust of the column names, one of {_ADJUST_OPTIONS}'],
         ['sep_vertical', 'str', '|', 'a vertical separator string'],
@@ -52,7 +50,7 @@ class NiceTable:
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
         ['value_none_string', 'str', '<None>', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
-            f'handling of sep_vertical inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
+            f'handling of `sep_vertical` inside a value, one of {_VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
     ]
 
@@ -97,18 +95,12 @@ class NiceTable:
         self.columns = []
         self.col_names = []
         self.col_adjust = []
-        self.col_widths = []
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = []
-        self.col_digits_left = []    # per column: max number of digits in a number
-        self.col_digits_right = []   # per column: max number of digits in a number after the period
         for name in columns_name:
             self.columns.append([])
             self.col_names.append(self.value_none_string if name is None else name)
             self.col_adjust.append(None)
-            self.col_widths.append(len(str(name)))
             self.col_funcs.append(None)
-            self.col_digits_left.append(0)
-            self.col_digits_right.append(0)
         self.total_lines = 0
         self.total_cols = len(self.col_names)
 
@@ -122,24 +114,10 @@ class NiceTable:
 
         self.total_lines += 1
         for i in range(self.total_cols):  #
-            if i >= len(values):  # values[] can be shorter than self.total_cols
+            if i >= len(values):  # values[] is allowed to be shorter than self.total_cols
                 self.columns[i].append(None)
             else:
-                value = values[i]
-                self.columns[i].append(value)
-                self.col_widths[i] = max(self.col_widths[i], len(self._formatted_value(i, value).strip()))
-                if isinstance(value, numbers.Number):
-                    # using str(value) instead of self._formatted_value(i, value) in this block.
-                    # the later relies on the max column digits, which does not reflect yet the variable value...
-                    value = str(value)
-                    dot_pos = value.find('.')
-                    if dot_pos == -1:
-                        self.col_digits_left[i] = max(self.col_digits_left[i], len(value))
-                    else:
-                        self.col_digits_left[i] = max(self.col_digits_left[i], len(value[:dot_pos]))
-                        self.col_digits_right[i] = max(self.col_digits_right[i], len(value[dot_pos+1:]))
-                    # print(f'value:{values[i]}   type:{type(values[i])}   formatted:{formatted_value}   '
-                    #       f'left:{self.col_digits_left[i]}   right:{self.col_digits_right[i]}')
+                self.columns[i].append(values[i])
 
     def _set_formatting_defaults(self):
         """ creates all instance variables and and initializes them to a default """
@@ -258,6 +236,7 @@ class NiceTable:
 
     def __str__(self):
         out = []
+        self._compute_columns_attributes()
         sep_line = self._generate_sepline()
         if self.border_top:
             out.append(sep_line)
@@ -269,6 +248,34 @@ class NiceTable:
         if self.border_bottom:
             out.append(sep_line)
         return '\n'.join(out) + '\n'
+
+    def _compute_columns_attributes(self):
+        def get_left_right_digits(n: numbers.Number) -> Tuple[int, int]:
+            if n is None:
+                return 0, 0
+            value = str(n)
+            dot_pos = value.find('.')
+            if dot_pos == -1:
+                return len(value), 0
+            else:
+                return len(value[:dot_pos]), len(value[dot_pos + 1:])
+
+        # setting initial mutable values for the calls to _formatted_value()
+        self.col_widths = list(self.cell_min_len for _ in range(self.total_cols))
+        self.col_is_numeric = list(False for _ in range(self.total_cols))
+        self.col_digits_left = list(0 for _ in range(self.total_cols))
+        self.col_digits_right = list(0 for _ in range(self.total_cols))
+        for col_pos in range(self.total_cols):
+            col_is_numeric = all(isinstance(value, numbers.Number) or value is None for value in self.columns[col_pos])
+            if col_is_numeric:
+                self.col_is_numeric[col_pos] = True
+                len_pairs_list = list(get_left_right_digits(value) for value in self.columns[col_pos])
+                self.col_digits_left[col_pos] = max(pair[0] for pair in len_pairs_list)
+                self.col_digits_right[col_pos] = max(pair[1] for pair in len_pairs_list)
+            col_name = self.col_names[col_pos]
+            header_len = len(self.value_none_string) if col_name is None else len(col_name)
+            max_data_len = max(len(self._formatted_value(col_pos, value)) for value in self.columns[col_pos])
+            self.col_widths[col_pos] = max(header_len, max_data_len)
 
     def _get_value_sep(self) -> str:
         """ computes the separator string between cells, for example '  |  ' """
@@ -300,9 +307,8 @@ class NiceTable:
         elif adjust == 'left':
             out = escaped_str_element.ljust(col_len)
         elif adjust == 'auto':
-            if is_header is False and isinstance(processed_element, numbers.Number):
+            if not is_header and self.col_is_numeric[pos]:
                 out = f'{processed_element:.{self.col_digits_right[pos]}f}'.rjust(col_len)
-                # do the magic
             else:
                 out = escaped_str_element.ljust(col_len)
         else:  # compact

@@ -180,6 +180,12 @@ class LayoutOptions(TestCase):
                          data_cols[1][2].strip(),
                          'None value in data should become self.value_none_string')
 
+        self.tbl.col_names[1] = 'Type'
+        self.tbl.value_none_string = '-- NO VALUE NO VALUE NO VALUE --'
+        self.assertEqual(min(len(line) for line in str(self.tbl).splitlines()),
+                         max(len(line) for line in str(self.tbl).splitlines()),
+                         'all lines should be the same length, after dynamically changing NULL string to a long one')
+
     def test__cell_spacing(self):
         self.tbl.cell_spacing = 1
         data_line = str(self.tbl).splitlines()[4]
