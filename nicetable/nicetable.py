@@ -32,7 +32,7 @@ class NiceTable:
         ']'
 
     _MINIMAL_ADJUST_OPTIONS = ['left', 'center', 'right', 'compact']
-    _FULL_ADJUST_OPTIONS = ['auto'] + _MINIMAL_ADJUST_OPTIONS
+    _FULL_ADJUST_OPTIONS = ['auto'] + _MINIMAL_ADJUST_OPTIONS + ['strict_left', 'strict_center', 'strict_right']
     _VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
 
     FORMATTING_SETTINGS = [
@@ -286,34 +286,37 @@ class NiceTable:
         """ computes the separator of elements for a separator line, for example '--+--' """
         return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
-    def _to_value_str(self, value: Any, pos: int, is_header: bool) -> str:
+    def _to_value_str(self, value: Any, pos: int, adjust: str, is_header: bool) -> str:
         """Convert value to unadjusted string"""
         processed_value = value if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](value)
-        if processed_value is None:
-            return self.value_none_string
-
-        if isinstance(processed_value, numbers.Number): # for numbers, the adjust effects how the string is generated
-            target_length = self.col_digits_left[pos] + self.col_digits_right[pos] + 1
-            return f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(target_length)
-
-        if self.value_escape_type == 'remove':
-            return str(processed_value).replace(self.sep_vertical, '')
-        elif self.value_escape_type == 'replace':
-            return str(processed_value).replace(self.sep_vertical, self.value_escape_char)
-        elif self.value_escape_type == 'prefix':
-            return str(processed_value).replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
-        else:  # 'ignore'
-            return str(processed_value)
+        if isinstance(processed_value, numbers.Number):
+            if 'strict' in adjust:
+                out = str(processed_value)
+            else:
+                value_length = self.col_digits_left[pos] + self.col_digits_right[pos] + 1
+                out = f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(value_length)
+        else:
+            if processed_value is None:
+                out = self.value_none_string
+            elif self.value_escape_type == 'remove':
+                out = str(processed_value).replace(self.sep_vertical, '')
+            elif self.value_escape_type == 'replace':
+                out = str(processed_value).replace(self.sep_vertical, self.value_escape_char)
+            elif self.value_escape_type == 'prefix':
+                out = str(processed_value).replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
+            else:  # 'ignore'
+                out = str(processed_value)
+        return out
 
     def _to_cell_str(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> str:
-        """Convert a string value to a cell-adjusted string"""
-        str_value = self._to_value_str(value, pos, is_header)
+        """Get a string representation of a value and apply cell adjustment to it"""
+        str_value = self._to_value_str(value, pos, adjust, is_header)
         col_len = max(self.col_widths[pos], self.cell_min_len)
-        if adjust == 'right' or (adjust == 'auto' and self.col_is_numeric[pos]):
+        if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
             return str_value.rjust(col_len)
-        elif adjust == 'center':
+        elif adjust in ['center', 'strict_center']:
             return str_value.center(col_len)
-        elif adjust in ['left', 'auto']:
+        elif adjust in ['left', 'strict_left', 'auto']:
             return str_value.ljust(col_len)
         else:  # compact
             return str_value.strip().ljust(self.cell_min_len)
@@ -356,9 +359,9 @@ class NiceTable:
         return out
 
     def set_col_adjust(self, col: Union[int, str], adjust: str) -> None:
-        if adjust not in self._ADJUST_OPTIONS:
+        if adjust not in self._FULL_ADJUST_OPTIONS:
             raise ValueError('NiceTable.set_col_adjust(): '
-                             f'got adjust value "{adjust}", expecting one of {self._ADJUST_OPTIONS}')
+                             f'got adjust value "{adjust}", expecting one of {self._FULL_ADJUST_OPTIONS}')
         if isinstance(col, int):
             # noinspection PyTypeChecker
             self.col_adjust[col] = adjust

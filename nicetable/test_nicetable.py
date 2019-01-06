@@ -119,7 +119,7 @@ class LayoutOptions(TestCase):
         with self.assertRaises(ValueError) as context:
             self.tbl.cell_adjust = None
         self.assertTrue(str(context.exception).startswith('Unknown adjust "None", should be one of ['),
-                        'Specifying an unknown header adjustment should raise with clear error')
+                        'Specifying an unknown cell adjustment should raise with clear error')
 
     def test__cell_adjust(self):
         self.tbl.cell_adjust = 'left'
@@ -128,11 +128,23 @@ class LayoutOptions(TestCase):
                          data_line,
                          'Left-adjusted data')
 
+        self.tbl.cell_adjust = 'strict_left'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  Pikachu    |  Electric      |  40          |  6.1         |',
+                         data_line,
+                         'Strict left-adjusted data - numbers are not auto-adjusted')
+
         self.tbl.cell_adjust = 'center'
         data_line = str(self.tbl).splitlines()[4]
         self.assertEqual('|   Pikachu   |    Electric    |       40     |     6.100    |',
                          data_line,
                          'Center-adjusted data')
+
+        self.tbl.cell_adjust = 'strict_center'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|   Pikachu   |    Electric    |      40      |     6.1      |',
+                         data_line,
+                         'Strict center-adjusted data - numbers are not auto-adjusted')
 
         self.tbl.cell_adjust = 'right'
         data_line = str(self.tbl).splitlines()[4]
@@ -140,11 +152,17 @@ class LayoutOptions(TestCase):
                          data_line,
                          'Right-adjusted data')
 
+        self.tbl.cell_adjust = 'strict_right'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|    Pikachu  |      Electric  |          40  |         6.1  |',
+                         data_line,
+                         'Strict right-adjusted data - numbers are not auto-adjusted')
+
         self.tbl.cell_adjust = 'auto'
         data_line = str(self.tbl).splitlines()[4]
         self.assertEqual('|  Pikachu    |  Electric      |          40  |       6.100  |',
                          data_line,
-                         'auto-adjusted data (last column should be 6.100 due to other values in the column')
+                         'auto-adjusted data (last column should be 6.100 due to other values in the column)')
 
         self.tbl.cell_adjust = 'compact'
         data_line = str(self.tbl).splitlines()[4]
