@@ -21,7 +21,7 @@ You can optionally pick a table layout, or override any formatting option:
 `print(out)`
 
 #### Example
-The class function `NiceTable.supported_layouts()` returns a `List` of all builtin layouts and their description.  
+The class function `NiceTable.supported_layouts()` returns a `List` of [name, description] of all the builtin layouts.  
 This example uses `NiceTable` to print that list with the default table layout:
 ````python
 from nicetable import NiceTable
@@ -91,17 +91,6 @@ Note that the `default` layout adjusts the column values with `auto` adjustment:
 2. In each column, numbers are printed with the same number of fractional digits, so they align nicely.  
 For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all printed well-aligned.
 
-## Other options
-TODO  
-get_column(...)  <-- get a `List` of values
-
-*exceptions*
-one of each like
-
-out.format('colorful rainbow')  
-out.append(1231)  
-out.set_col... (index out of bound)  
-
 ## Formatting settings
 You can override most formatting settings  by directly setting a value to their instance variable, for example:  
 `out.header = False`   
@@ -139,9 +128,39 @@ print(out)
 ````
 
 #### Column-level settings
-TODO  
-`out.set_col_adjust('Type','center')`   *(set a column property by name)*  
-`out.set_col_adjust(1,'center')`   *(set a column property by position)* 
+There are some column-level settings that you can control.  
+For each, you can specify the affected column by the column name or by the column position.
+**set_col_adjust(col, adjust)**
+sets an adjustment for a column. Overrides the table-level `cell_adjust` property.
+`out.set_col_adjust('Type','center')`   *# set a by column name*  
+`out.set_col_adjust(1,'center')`   *# set by position*  
+**set_col_func(col,function)**
+attach a pre-processing function to a column. The function will be applied to the value before it is being formatted.
+````python
+out = NiceTable(['Name', 'Type', 'Height(cm)', ' Weight(kg)'], layout='default')
+for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+    out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
+out.set_col_func(0, lambda x: x.upper())
+out.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
+print(out)
+````
+Output:
+````
++-------------+----------------+--------------+---------------+
+|  Name       |  Type          |  Height(cm)  |   Weight(kg)  |
++-------------+----------------+--------------+---------------+
+|  BULBASAUR  |  grass/poison  |          70  |        6.901  |
+|  PIKACHU    |  N/A           |          40  |        6.100  |
+|  MEWTWO     |  psychic       |         200  |      122.000  |
++-------------+----------------+--------------+---------------+
+````
+The first column was changed to uppercase, the second to lowercase except one value that was assigned `None`,
+and therefore converted to `value_none_string`.
+
+
+## Others
+**get_column(col)**
+returns a `List` of the column values.  
 
 
 #### Adding a custom layout
@@ -175,4 +194,4 @@ Output:
 ❄☂🌧☂❄  winter_columns  ❄☂🌧☂❄  Table with a winter-themed separator. Quite Ugly.                                                   ❄☂🌧☂❄
 ❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄
 ````
-As you can see, the new layout and its description were added to the `MyNiceTable.builtin_layouts()` of the new class.
+As you can see, the new layout and its description were added the output of `builtin_layouts()` of the new class.
