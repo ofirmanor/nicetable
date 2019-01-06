@@ -129,12 +129,14 @@ print(out)
 
 #### Column-level settings
 There are some column-level settings that you can control.  
-For each, you can specify the affected column by the column name or by the column position.
-**set_col_adjust(col, adjust)**
-sets an adjustment for a column. Overrides the table-level `cell_adjust` property.
+For each, you can specify the affected column by the column name or by the column position.  
+
+**set_col_adjust(col, adjust)**  
+sets an adjustment for a column. Overrides the table-level `cell_adjust` property.  
 `out.set_col_adjust('Type','center')`   *# set a by column name*  
 `out.set_col_adjust(1,'center')`   *# set by position*  
-**set_col_func(col,function)**
+
+**set_col_func(col,function)**  
 attach a pre-processing function to a column. The function will be applied to the value before it is being formatted.
 ````python
 out = NiceTable(['Name', 'Type', 'Height(cm)', ' Weight(kg)'], layout='default')
@@ -159,11 +161,11 @@ and therefore converted to `value_none_string`.
 
 
 ## Others
-**get_column(col)**
+**get_column(col)**  
 returns a `List` of the column values.  
 
 
-#### Adding a custom layout
+## Adding a custom layout
 To add a custom layout based on the existing options, you can inherit from `NiceTable` 
 and define your own layout function.  
 The description of your function will be incorporated in the `builtin_layouts()` output
