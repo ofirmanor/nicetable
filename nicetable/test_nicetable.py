@@ -1,5 +1,5 @@
 from unittest import TestCase
-from nicetable import NiceTable
+from nicetable.nicetable import NiceTable
 from typing import List
 import json
 
@@ -282,9 +282,8 @@ class LayoutOptions(TestCase):
 
         with self.assertRaises(IndexError) as context:
             self.tbl.set_col_adjust('my col', 'center')
-        print(context.exception)
         self.assertTrue(str(context.exception).
-                        startswith('NiceTable.set_col_adjust(): got col adjust "my col", expecting one of'),
+                        startswith('NiceTable.set_col_adjust(): got col name "my col", expecting one of'),
                         'when first param of set_col_adj is a str, it must be a valid column name')
 
         with self.assertRaises(IndexError) as context:
@@ -347,3 +346,7 @@ class LayoutOptions(TestCase):
         self.assertEqual([6.901, 6.1, 122],
                          self.tbl.get_column('Weight(kg)'),
                          'getting a column as a list of values')
+
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

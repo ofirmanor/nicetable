@@ -1,7 +1,7 @@
 import numbers
 from typing import List, Union, Optional, Callable, Any, Tuple
 
-from .aux_functions import *
+from nicetable.aux_functions import *
 
 
 class NiceTable:

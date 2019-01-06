@@ -1,6 +1,6 @@
 # Example: printing the list of builtin layouts
 import json
-from nicetable import NiceTable
+from nicetable.nicetable import NiceTable
 # from __future__ import annotations   # only for Python 3.7 and up?
 
 out = NiceTable(['Layout', 'Description'])
