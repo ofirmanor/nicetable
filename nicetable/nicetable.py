@@ -39,8 +39,8 @@ class NiceTable:
         ['border_left', 'bool', True, 'whether the table left border will be printed'],
         ['border_right', 'bool', True, 'whether the table right border will be printed'],
         ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {COLUMN_ADJUST_OPTIONS}'],
-        ['cell_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
+        ['value_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded)'],
         ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
             f'handling of `sep_vertical` inside a value, one of {VALUE_ESCAPING_OPTIONS}'],
@@ -60,7 +60,6 @@ class NiceTable:
         prefix = '_layout_as_'
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
-
     def __init__(self,
                  columns_name: List[str],
                  layout: Optional[str] = None,
@@ -75,8 +74,8 @@ class NiceTable:
                  border_left: Optional[bool] = None,
                  border_right: Optional[bool] = None,
                  cell_adjust: Optional[str] = None,
-                 cell_min_len: Optional[int] = None,
                  cell_spacing: Optional[int] = None,
+                 value_min_len: Optional[int] = None,
                  value_none_string: Optional[str] = None,
                  value_escape_type: Optional[str] = None,
                  value_escape_char: Optional[str] = None):
@@ -95,8 +94,8 @@ class NiceTable:
         self.border_left = coalesce(border_left, self.border_left)
         self.border_right = coalesce(border_right, self.border_right)
         self.cell_adjust = coalesce(cell_adjust, self.cell_adjust)
-        self.cell_min_len = coalesce(cell_min_len, self.cell_min_len)
         self.cell_spacing = coalesce(cell_spacing, self.cell_spacing)
+        self.value_min_len = coalesce(value_min_len, self.value_min_len)
         self.value_none_string = coalesce(value_none_string, self.value_none_string)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
@@ -130,8 +129,8 @@ class NiceTable:
         self.border_left = get_default('border_left')
         self.border_right = get_default('border_right')
         self.cell_adjust = get_default('cell_adjust')
-        self.cell_min_len = get_default('cell_min_len')
         self.cell_spacing = get_default('cell_spacing')
+        self.value_min_len = get_default('value_min_len')
         self.value_none_string = get_default('value_none_string')
         self.value_escape_type = get_default('value_escape_type')
         self.value_escape_char = get_default('value_escape_char')
@@ -220,7 +219,7 @@ class NiceTable:
         self.sep_cross = '|'
         self.value_escape_type = 'prefix'
         self.value_escape_char = '\\'
-        self.cell_min_len = 3
+        self.value_min_len = 3
 
     def append(self, values: List[Any]) -> None:
         """Append a new line from list."""
@@ -264,7 +263,7 @@ class NiceTable:
                 return len(value[:dot_pos]), len(value[dot_pos + 1:])
 
         # setting initial mutable values for the calls to _formatted_value()
-        self.col_widths = list(self.cell_min_len for _ in range(self.total_cols))
+        self.col_widths = list(self.value_min_len for _ in range(self.total_cols))
         self.col_is_numeric = list(False for _ in range(self.total_cols))
         self.col_digits_left = list(0 for _ in range(self.total_cols))
         self.col_digits_right = list(0 for _ in range(self.total_cols))
@@ -313,7 +312,7 @@ class NiceTable:
     def _to_cell_str(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> str:
         """Get a string representation of a value and apply cell adjustment to it"""
         str_value = self._to_value_str(value, pos, adjust, is_header)
-        col_len = max(self.col_widths[pos], self.cell_min_len)
+        col_len = max(self.col_widths[pos], self.value_min_len)
         if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
             return str_value.rjust(col_len)
         elif adjust in ['center', 'strict_center']:
@@ -321,7 +320,7 @@ class NiceTable:
         elif adjust in ['left', 'strict_left', 'auto']:
             return str_value.ljust(col_len)
         else:  # compact
-            return str_value.strip().ljust(self.cell_min_len)
+            return str_value.strip().ljust(self.value_min_len)
 
     def _formatted_column_name(self, pos: int) -> str:
         return self._to_cell_str(self.col_names[pos], self.header_adjust, pos, True)

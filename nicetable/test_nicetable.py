@@ -170,18 +170,18 @@ class LayoutOptions(TestCase):
                          data_line,
                          'compact data (cell_spacing == 2) still applies')
 
-    def test__cell_min_len(self):
-        self.tbl.cell_min_len = 5
+    def test__value_min_len(self):
+        self.tbl.value_min_len = 5
         data_line = str(self.tbl).splitlines()[4]
         self.assertEqual('|  Pikachu    |  Electric      |          40  |       6.100  |',
                          data_line,
-                         'if cell_min_len is too small, it has no effect')
+                         'if value_min_len is too small, it has no effect')
 
-        self.tbl.cell_min_len = 13
+        self.tbl.value_min_len = 13
         data_line = str(self.tbl).splitlines()[4]
         self.assertEqual('|  Pikachu        |  Electric       |             40  |          6.100  |',
                          data_line,
-                         'long cell_min_len - no column should be less than 13 characters')
+                         'long value_min_len - no column should be less than 13 characters')
 
     def test__value_none_string__header(self):
         self.tbl.col_names[1] = None
@@ -298,3 +298,11 @@ class LayoutOptions(TestCase):
         self.assertEqual(['grass/poison', 'N/A', 'psychic'],
                          list(value.strip() for value in data_cols[1][1:]),
                          'applying this function should result in lowercase / None values')
+
+    def test__get_column(self):
+        self.assertEqual([6.901, 6.1, 122],
+                         self.tbl.get_column(3),
+                         'getting a column as a list of values')
+        self.assertEqual([6.901, 6.1, 122],
+                         self.tbl.get_column('Weight(kg)'),
+                         'getting a column as a list of values')
