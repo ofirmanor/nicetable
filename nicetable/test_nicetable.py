@@ -272,8 +272,35 @@ class LayoutOptions(TestCase):
                          data_line,
                          'set sepline character to *')
 
-    # TODO: set_col_adj
-    def test__set_col_func__type(self):
+    def test__set_col_adjust__exceptions(self):
+        with self.assertRaises(ValueError) as context:
+            self.tbl.set_col_adjust(0, 'nothing')
+        self.assertTrue(str(context.exception).startswith(
+            'NiceTable.set_col_adjust(): got adjust value "nothing", expecting one of '),
+            'Specifying an unknown column adjustment should raise with clear error')
+
+
+        with self.assertRaises(IndexError) as context:
+            self.tbl.set_col_adjust('my col', 'center')
+        print(context.exception)
+        self.assertTrue(str(context.exception).
+                        startswith('NiceTable.set_col_adjust(): got col adjust "my col", expecting one of'),
+                        'when first param of set_col_adj is a str, it must be a valid column name')
+
+        with self.assertRaises(IndexError) as context:
+            self.tbl.set_col_adjust(77, 'center')
+        self.assertEqual('NiceTable.set_col_adjust(): got col index 77, expecting index in the range of "0..3"',
+                         str(context.exception),
+                         'when first param of set_col_adj is a int, it must be a valid column number')
+
+    def test__set_col_adjust(self):
+        self.tbl.set_col_adjust(3,'left')
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  Pikachu    |  Electric      |          40  |    6.100     |',
+                         data_line,
+                         'Left-adjusted forth column')
+
+    def test__set_col_func__exceptions(self):
         with self.assertRaises(TypeError) as context:
             self.tbl.set_col_func(None, lambda x: x)
         self.assertEqual("NiceTable.set_col_func(): " +
@@ -281,11 +308,25 @@ class LayoutOptions(TestCase):
                          str(context.exception),
                          'first param of set_col_func must be int or str')
 
+        with self.assertRaises(TypeError) as context:
+            self.tbl.set_col_func(0, 'not a function')
+        self.assertEqual("NiceTable.set_col_func(): " +
+                         "second parameter should be a function, got <class 'str'>",
+                         str(context.exception),
+                         'second param of set_col_func must be a function')
+
         with self.assertRaises(IndexError) as context:
             self.tbl.set_col_func('my col', lambda x: x)
         self.assertTrue(str(context.exception).
                         startswith('NiceTable.set_col_func(): got col value "my col", expecting one of'),
                         'when first param of set_col_func is a str, it must be a valid column name')
+
+        with self.assertRaises(IndexError) as context:
+            self.tbl.set_col_func(77, None)
+        self.assertEqual('NiceTable.set_col_func(): got col index 77, expecting index in the range of "0..3"',
+                         str(context.exception),
+                         'when first param of set_col_func is a int, it must be a valid column number')
+
 
     def test__set_col_func(self):
         self.tbl.set_col_func(0, lambda x: x.upper())

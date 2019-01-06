@@ -5,7 +5,7 @@ from aux_functions import *
 
 
 class NiceTable:
-    """A helper class that let you accumulate records and get them back in a printable tabular format
+    """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
         TODO import table directly from dictionary / JSON
@@ -18,7 +18,6 @@ class NiceTable:
         TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
         TODO (idea) ASCII color for headers
     PACKAGING / PUBLISHING
-        TODO finish readme
         TODO publish (final)
         TODO docstring for __init__ or class
     """
@@ -364,18 +363,28 @@ class NiceTable:
             raise ValueError('NiceTable.set_col_adjust(): '
                              f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
         if isinstance(col, int):
-            # noinspection PyTypeChecker
+            if col < 0 or col >= self.total_cols:
+                raise IndexError("NiceTable.set_col_adjust(): " +
+                                 f'got col index {col}, expecting index in the range of "0..{self.total_cols -1}"')
             self.col_adjust[col] = adjust
         elif isinstance(col, str):
-            # noinspection PyTypeChecker
+            if col not in self.COLUMN_ADJUST_OPTIONS:
+                raise IndexError("NiceTable.set_col_adjust(): " +
+                                 f'got col adjust "{col}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
             self.col_adjust[self.col_names.index(col)] = adjust
         else:
             raise TypeError('NiceTable.set_col_adjust(): '
                             f'expects str or int (column name or position), got {type(col)}')
 
     def set_col_func(self, col: Union[int, str], func: Optional[Callable[[Any], Any]]) -> None:
+        if func is not None and not hasattr(func, '__call__'):
+            raise TypeError("NiceTable.set_col_func(): " +
+                            f"second parameter should be a function, got {type(func)}")
+
         if isinstance(col, int):
-            # noinspection PyTypeChecker
+            if col < 0 or col >= self.total_cols:
+                raise IndexError("NiceTable.set_col_func(): " +
+                                 f'got col index {col}, expecting index in the range of "0..{self.total_cols -1}"')
             self.col_funcs[col] = func
         elif isinstance(col, str):
             # noinspection PyTypeChecker
