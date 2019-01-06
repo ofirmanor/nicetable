@@ -99,24 +99,24 @@ You can override most formatting settings  by directly setting a value to their 
 
 Here is the list of formatting settings:
 
-|  Setting            |  Type  |  Default  |  Description                                                                                |
-|---------------------|--------|-----------|---------------------------------------------------------------------------------------------|
-|  header             |  bool  |  True     |  whether the table header will be printed                                                   |
-|  header_sepline     |  bool  |  True     |  if the header is printed, whether a sepline will be printed after it                       |
-|  header_adjust      |  str   |  left     |  adjust of the column names, one of ['auto', 'left', 'center', 'right', 'compact']          |
-|  sep_vertical       |  str   |  \|       |  a vertical separator string                                                                |
-|  sep_horizontal     |  str   |  -        |  a horizontal separator string                                                              |
-|  sep_cross          |  str   |  +        |  a crossing separator string (where vertical and horizontal separators meet)                |
-|  border_top         |  bool  |  True     |  whether the table top border will be printed                                               |
-|  border_bottom      |  bool  |  True     |  whether the table bottom border will be printed                                            |
-|  border_left        |  bool  |  True     |  whether the table left border will be printed                                              |
-|  border_right       |  bool  |  True     |  whether the table right border will be printed                                             |
-|  cell_adjust        |  str   |  auto     |  adjust of the values, one of ['auto', 'left', 'center', 'right', 'compact']                |
-|  cell_min_len       |  int   |  1        |  minimal string length of a value (shorter value will be space-padded                       |
-|  cell_spacing       |  int   |  2        |  number of spaces to add to each side of a value                                            |
-|  value_none_string  |  str   |  <NONE>   |  string representation of the None value                                                    |
-|  value_escape_type  |  str   |  ignore   |  handling of sep_vertical inside a value, one of ['remove', 'replace', 'prefix', 'ignore']  |
-|  value_escape_char  |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                 |
+|  Setting            |  Type  |  Default  |  Description                                                                                                                  |
+|---------------------|--------|-----------|-------------------------------------------------------------------------------------------------------------------------------|
+|  header             |  bool  |  1        |  whether the table header will be printed                                                                                     |
+|  header_sepline     |  bool  |  1        |  if the header is printed, whether a sepline will be printed after it                                                         |
+|  header_adjust      |  str   |  left     |  adjust of the column names, one of ['left', 'center', 'right', 'compact']                                                    |
+|  sep_vertical       |  str   |  \|       |  a vertical separator string                                                                                                  |
+|  sep_horizontal     |  str   |  -        |  a horizontal separator string                                                                                                |
+|  sep_cross          |  str   |  +        |  a crossing separator string (where vertical and horizontal separators meet)                                                  |
+|  border_top         |  bool  |  1        |  whether the table top border will be printed                                                                                 |
+|  border_bottom      |  bool  |  1        |  whether the table bottom border will be printed                                                                              |
+|  border_left        |  bool  |  1        |  whether the table left border will be printed                                                                                |
+|  border_right       |  bool  |  1        |  whether the table right border will be printed                                                                               |
+|  cell_adjust        |  str   |  auto     |  adjust of the values, one of ['auto', 'left', 'center', 'right', 'compact', 'strict_left', 'strict_center', 'strict_right']  |
+|  cell_spacing       |  int   |  2        |  number of spaces to add to each side of a value                                                                              |
+|  value_min_len      |  int   |  1        |  minimal string length of a value (shorter value will be space-padded)                                                        |
+|  value_none_string  |  str   |  N/A      |  string representation of the None value                                                                                      |
+|  value_escape_type  |  str   |  ignore   |  handling of `sep_vertical` inside a value, one of ['remove', 'replace', 'prefix', 'ignore']                                  |
+|  value_escape_char  |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                   |
 
 *The table above was generated by iterating on `NiceTable.FORMATTING_SETTINGS` and using the `md` layout:*
 ````python
