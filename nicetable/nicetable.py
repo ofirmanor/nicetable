@@ -1,7 +1,7 @@
 import numbers
 from typing import List, Union, Optional, Callable, Any, Tuple
 
-from aux_functions import *
+from .aux_functions import *
 
 
 class NiceTable:
@@ -368,9 +368,9 @@ class NiceTable:
                                  f'got col index {col}, expecting index in the range of "0..{self.total_cols -1}"')
             self.col_adjust[col] = adjust
         elif isinstance(col, str):
-            if col not in self.COLUMN_ADJUST_OPTIONS:
+            if col not in self.col_names:
                 raise IndexError("NiceTable.set_col_adjust(): " +
-                                 f'got col adjust "{col}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
+                                 f'got col name "{col}", expecting one of {self.col_names}')
             self.col_adjust[self.col_names.index(col)] = adjust
         else:
             raise TypeError('NiceTable.set_col_adjust(): '
