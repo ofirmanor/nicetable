@@ -26,6 +26,7 @@ for setting in NiceTable.FORMATTING_SETTINGS:
 out.set_col_adjust('Default', 'strict_left')
 print(out)
 
+
 # Example: custom layout
 class MyNiceTable(NiceTable):
     def _layout_as_winter_columns(self) -> None:

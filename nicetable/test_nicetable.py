@@ -279,7 +279,6 @@ class LayoutOptions(TestCase):
             'NiceTable.set_col_adjust(): got adjust value "nothing", expecting one of '),
             'Specifying an unknown column adjustment should raise with clear error')
 
-
         with self.assertRaises(IndexError) as context:
             self.tbl.set_col_adjust('my col', 'center')
         self.assertTrue(str(context.exception).
@@ -293,7 +292,7 @@ class LayoutOptions(TestCase):
                          'when first param of set_col_adj is a int, it must be a valid column number')
 
     def test__set_col_adjust(self):
-        self.tbl.set_col_adjust(3,'left')
+        self.tbl.set_col_adjust(3, 'left')
         data_line = str(self.tbl).splitlines()[4]
         self.assertEqual('|  Pikachu    |  Electric      |          40  |    6.100     |',
                          data_line,
@@ -326,7 +325,6 @@ class LayoutOptions(TestCase):
                          str(context.exception),
                          'when first param of set_col_func is a int, it must be a valid column number')
 
-
     def test__set_col_func(self):
         self.tbl.set_col_func(0, lambda x: x.upper())
         self.tbl.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
@@ -346,6 +344,7 @@ class LayoutOptions(TestCase):
         self.assertEqual([6.901, 6.1, 122],
                          self.tbl.get_column('Weight(kg)'),
                          'getting a column as a list of values')
+
 
 if __name__ == '__main__':
     import unittest
