@@ -142,3 +142,37 @@ print(out)
 TODO  
 `out.set_col_adjust('Type','center')`   *(set a column property by name)*  
 `out.set_col_adjust(1,'center')`   *(set a column property by position)* 
+
+
+#### Adding a custom layout
+To add a custom layout based on the existing options, you can inherit from `NiceTable` 
+and define your own layout function.  
+The description of your function will be incorporated in the `builtin_layouts()` output
+````python
+class MyNiceTable(NiceTable):
+    def _layout_as_winter_columns(self) -> None:
+        """Table with a winter-themed separator. Quite Ugly."""
+        self.sep_vertical = '❄☂🌧☂❄'
+        self.sep_cross = '❄☂🌧☂❄'
+        self.sep_horizontal = 'ˣ'
+
+
+out = MyNiceTable(['Layout', 'Description'], layout='winter_columns')
+for layout in MyNiceTable.builtin_layouts():
+    out.append(layout)
+print(out)
+````
+Output:
+````
+❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄
+❄☂🌧☂❄  Layout          ❄☂🌧☂❄  Description                                                                                         ❄☂🌧☂❄
+❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄
+❄☂🌧☂❄  csv             ❄☂🌧☂❄  comma-separated values with a one-line header.                                                      ❄☂🌧☂❄
+❄☂🌧☂❄  default         ❄☂🌧☂❄  fixed-width table with data auto-alignment.                                                         ❄☂🌧☂❄
+❄☂🌧☂❄  grep            ❄☂🌧☂❄  tab-separated values with no header. Great for CLI output, easily post-processed by cut, grep etc.  ❄☂🌧☂❄
+❄☂🌧☂❄  md              ❄☂🌧☂❄  for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github.      ❄☂🌧☂❄
+❄☂🌧☂❄  tsv             ❄☂🌧☂❄  tab-separated values with a one-line header.                                                        ❄☂🌧☂❄
+❄☂🌧☂❄  winter_columns  ❄☂🌧☂❄  Table with a winter-themed separator. Quite Ugly.                                                   ❄☂🌧☂❄
+❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄ˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣˣ❄☂🌧☂❄
+````
+As you can see, the new layout and its description were added to the `MyNiceTable.builtin_layouts()` of the new class.
