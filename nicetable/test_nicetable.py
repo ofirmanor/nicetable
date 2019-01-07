@@ -167,6 +167,13 @@ class LayoutOptions(TestCase):
                          data_line,
                          'compact data; (cell_spacing == 2) still applies, numbers appear in the output as-is')
 
+    def test__cell_spacing(self):
+        self.tbl.cell_spacing = 1
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('| Pikachu   | Electric     |         40 |      6.100 |',
+                         data_line,
+                         'cell spacing test - should be one space (beyond the fixed column width')
+
     def test__value_min_len(self):
         self.tbl.value_min_len = 5
         data_line = str(self.tbl).splitlines()[4]
@@ -198,7 +205,62 @@ class LayoutOptions(TestCase):
                          data_line2,
                          'newline is splitting the value into two lines (line2)')
 
-    def test__value_none_string__header(self):
+    # noinspection SpellCheckingInspection
+    def test__value_max_len(self):
+        self.tbl.value_max_len = 5
+        self.tbl.value_too_long_policy = 'wrap'
+        expected = \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Name   |  Type   |  Heigh  |  Weigh  |\n' + \
+            '|         |         |  t(cm)  |  t(kg)  |\n' + \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Bulba  |  Grass  |     70  |    6.9  |\n' + \
+            '|  saur   |  /Pois  |         |     01  |\n' + \
+            '|         |  on     |         |         |\n' + \
+            '|  Pikac  |  Elect  |     40  |    6.1  |\n' + \
+            '|  hu     |  ric    |         |     00  |\n' + \
+            '|  Mewtw  |  Psych  |    200  |  122.0  |\n' + \
+            '|  o      |  ic     |         |     00  |\n' + \
+            '+---------+---------+---------+---------+\n'
+        self.assertEqual(expected,
+                         str(self.tbl),
+                         'wrapping column names and values every five characters')
+
+        self.tbl.value_too_long_policy = 'truncate'
+        expected = \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Name   |  Type   |  Heigh  |  Weigh  |\n' + \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Bulba  |  Grass  |     70  |    6.9  |\n' + \
+            '|  Pikac  |  Elect  |     40  |    6.1  |\n' + \
+            '|  Mewtw  |  Psych  |    200  |  122.0  |\n' + \
+            '+---------+---------+---------+---------+\n'
+        self.assertEqual(expected,
+                         str(self.tbl),
+                         'truncating long column names and values to five characters')
+
+        self.tbl.value_max_len = 5
+        self.tbl.value_too_long_policy = 'wrap'
+        self.tbl.col_names[3] = 'a\n1234567\nabcdef\nXYZ\n'
+        header_lines = '\n'.join(str(self.tbl).splitlines()[:9]) + '\n'
+        expected_header = \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Name   |  Type   |  Heigh  |  a      |\n' + \
+            '|         |         |  t(cm)  |  12345  |\n' + \
+            '|         |         |         |  67     |\n' + \
+            '|         |         |         |  abcde  |\n' + \
+            '|         |         |         |  f      |\n' + \
+            '|         |         |         |  XYZ    |\n' + \
+            '|         |         |         |         |\n' + \
+            '+---------+---------+---------+---------+\n'
+        self.assertEqual(expected_header,
+                         header_lines,
+                         'combining multiple newlines in the header with max_value_len and wrapping')
+
+    def test__value_too_long_policy(self):
+        pass  # covered by test__value_max_len
+
+    def test__value_none_string(self):
         self.tbl.col_names[1] = None
         self.tbl.columns[1][1] = None
         self.tbl.columns[2][1] = None
@@ -213,20 +275,13 @@ class LayoutOptions(TestCase):
                          'None value for a field name should become self.value_none_string')
         self.assertEqual('|  Pikachu    |  N/A           |         N/A  |       6.100  |',
                          data_line,
-                         'None value in data should become self.value_none_string')
+                         'None value in data should become self.value_none_string, aligned by column setting')
 
         self.tbl.col_names[1] = 'Type'
         self.tbl.value_none_string = '-- NO VALUE NO VALUE NO VALUE --'
         self.assertEqual(min(len(line) for line in str(self.tbl).splitlines()),
                          max(len(line) for line in str(self.tbl).splitlines()),
                          'all lines should be the same length, after dynamically changing NULL string to a long one')
-
-    def test__cell_spacing(self):
-        self.tbl.cell_spacing = 1
-        data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('| Pikachu   | Electric     |         40 |      6.100 |',
-                         data_line,
-                         'value spacing test - should be one space (beyond the fixed column width')
 
     def test__sep_vertical(self):
         self.tbl.sep_vertical = 'oOo'

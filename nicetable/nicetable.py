@@ -10,21 +10,20 @@ class NiceTable:
     GENERAL
         TODO import table directly from dictionary / JSON
         TODO integrate with SQL result set
-        TODO finish unittests for coverage
+        TODO add unittests for each layout
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO add / remove column (data);  hide / show column (print)
     FORMATTING
         TODO custom value quoting (wrapper) like ""
-        TODO let the user directly change column width - handle "too short"? (ignore or text wrap)
         TODO (idea) ASCII color for headers
     PACKAGING / PUBLISHING
-        TODO publish (final)
         TODO docstring for __init__ or class
     """
 
     HEADER_ADJUST_OPTIONS = ['left', 'center', 'right', 'compact']
     COLUMN_ADJUST_OPTIONS = ['auto'] + HEADER_ADJUST_OPTIONS + ['strict_left', 'strict_center', 'strict_right']
     VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
+    VALUE_TOO_LONG_POLICY = ['truncate', 'wrap']
 
     FORMATTING_SETTINGS = [  # Name, Type, Default, Description
         ['header', 'bool', True, 'whether the table header will be printed'],
@@ -40,8 +39,9 @@ class NiceTable:
         ['cell_adjust', 'str', 'auto', f'adjust of the values, one of:\n  {COLUMN_ADJUST_OPTIONS}'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
         ['value_min_len', 'int', 1, 'minimal string length of a value. Shorter values will be space-padded'],
-        ['value_max_len', 'int', 999, 'maximum string length of a value'],
-        ['value_too_long_policy', 'str', 'something???', 'one of ???'],
+        ['value_max_len', 'int', 9999, 'maximum string length of a value'],
+        ['value_too_long_policy', 'str', 'wrap',
+            f'handling of a string longer than `value_max_len`, one of:\n  {VALUE_TOO_LONG_POLICY} '],
         ['value_newline_replace', 'str', None, 'if set, replace newlines in string value with this'],
         ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
@@ -169,6 +169,17 @@ class NiceTable:
         self._cell_adjust = adjust
 
     @property
+    def value_too_long_policy(self):
+        return self._value_too_long_policy
+
+    @value_too_long_policy.setter
+    def value_too_long_policy(self, policy: str):
+        if policy not in self.VALUE_TOO_LONG_POLICY:
+                raise ValueError(f'Unknown "value too long" policy "{policy}", '
+                                 f'should be one of {self.VALUE_TOO_LONG_POLICY}')
+        self._value_too_long_policy = policy
+
+    @property
     def value_escape_type(self):
         return self._value_escape_type
 
@@ -254,7 +265,7 @@ class NiceTable:
         if self.border_top:
             out.append(sep_line)
         if self.header:
-            out.append(self._generate_header_line())
+            out += self._generate_header_lines()
             if self.header_sepline:
                 out.append(sep_line)
         out += self._generate_data_lines()
@@ -273,7 +284,7 @@ class NiceTable:
             else:
                 return len(value[:dot_pos]), len(value[dot_pos + 1:])
 
-        # setting initial mutable values for the calls to _formatted_value_list()
+        # setting initial mutable values for the calls to _value_as_str_list()
         self.col_widths = list(self.value_min_len for _ in range(self.total_cols))
         self.col_is_numeric = list(False for _ in range(self.total_cols))
         self.col_digits_left = list(0 for _ in range(self.total_cols))
@@ -285,10 +296,10 @@ class NiceTable:
                 len_pairs_list = list(get_left_right_digits(value) for value in self.columns[col_pos])
                 self.col_digits_left[col_pos] = max(pair[0] for pair in len_pairs_list)
                 self.col_digits_right[col_pos] = max(pair[1] for pair in len_pairs_list)
-            col_name = self.col_names[col_pos]
-            header_len = len(self.value_none_string) if col_name is None else len(col_name)
+
+            header_len = max(len(col_name_line) for col_name_line in self._col_name_as_str_list(col_pos))
             # getting max data length of the column - each cell can be multi-line
-            all_cells_str_lists = (self._formatted_value_list(col_pos, value) for value in self.columns[col_pos])
+            all_cells_str_lists = (self._value_as_str_list(col_pos, value) for value in self.columns[col_pos])
             all_col_str = (s for single_cell_list in all_cells_str_lists for s in single_cell_list)
             max_data_len = max(len(s) for s in all_col_str)
             self.col_widths[col_pos] = max(header_len, max_data_len)
@@ -305,6 +316,7 @@ class NiceTable:
         """Convert value to a list of unadjusted strings"""
         # 1. Apply any column-level lambda, if any
         processed_value = value if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](value)
+
         # 2. Format the value as a single string, including:
         #       for numbers: auto adjust if asked - fixed number of fractional digits and left-padding with spaces
         #       for non-numbers: escaping the sep_vertical character by policy
@@ -326,14 +338,23 @@ class NiceTable:
                                                                self.value_escape_char + self.sep_vertical)
             else:  # 'ignore'
                 single_line_str = str(processed_value)
+
         # 3. Handle newlines in the string
         if self.value_newline_replace is None:
             str_list = single_line_str.split('\n')
         else:
             str_list = [single_line_str.replace('\n', self.value_newline_replace)]
-        # 4. Handle long lines based on the table policy
-        pass  # TODO
-        return str_list
+
+        # 4. Handle long output lines based on the table policy
+        final_str_list = []
+        for s in str_list:
+            if len(s) <= self.value_max_len:
+                final_str_list.append(s)
+            elif self.value_too_long_policy == 'truncate':
+                final_str_list.append(s[:self.value_max_len])
+            else:  # wrap long value
+                final_str_list += [s[i:i+self.value_max_len] for i in range(0, len(s), self.value_max_len)]
+        return final_str_list
 
     def _str_to_cell(self, str_value: Optional[Any], adjust: str, pos: int) -> List[str]:
         """Get a string representation of a value and apply cell adjustment to it"""
@@ -348,7 +369,7 @@ class NiceTable:
             return [str_value.strip().ljust(self.value_min_len)]
 
     def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
-        """Get a string representation of a value and apply cell adjustment to it"""
+        """Get a string representation of a value (List[str] to support multi-line) and apply cell adjustment to it"""
         compact_number = adjust.startswith('strict') or adjust == 'compact'
         str_list = self._value_to_str_list(value, pos, compact_number, is_header)
 
@@ -363,10 +384,10 @@ class NiceTable:
             adjusted_str_list = list(value.strip().ljust(self.value_min_len) for value in str_list)
         return adjusted_str_list
 
-    def _formatted_column_name(self, pos: int) -> str:
-        return self._to_cell_str_list(self.col_names[pos], self.header_adjust, pos, True)[0]  # FIXME multi-line header
+    def _col_name_as_str_list(self, pos: int) -> List[str]:
+        return self._to_cell_str_list(self.col_names[pos], self.header_adjust, pos, True)
 
-    def _formatted_value_list(self, pos: int, value: Any) -> List[str]:
+    def _value_as_str_list(self, pos: int, value: Any) -> List[str]:
         return self._to_cell_str_list(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
 
     def _wrap_line_with_borders(self, line: str) -> str:
@@ -374,18 +395,20 @@ class NiceTable:
         right_border = f'{" " * self.cell_spacing}{self.sep_vertical}' if self.border_right else ''
         return f'{left_border}{line}{right_border}'
 
-    def _generate_header_line(self) -> str:
-        """Generate header lines as a string"""
+    def _generate_header_lines(self) -> List[str]:
+        """Generate header lines as a list of strings (to support multi-line headers)"""
         formatted_header_elements = []
         for i in range(len(self.col_names)):
-            formatted_header_elements.append(self._formatted_column_name(i))
-        return self._wrap_line_with_borders(self._get_value_sep().join(formatted_header_elements))
+            formatted_header_elements.append(self._col_name_as_str_list(i))
+        return self._generate_output_lines_elements(formatted_header_elements)
 
     def _generate_sepline(self) -> str:
-        """Generate header lines as list of lines"""
+        """Generate a separator line"""
         out, sep_elements = [], []
         for i in range(len(self.col_names)):
-            sep_elements.append(self.sep_horizontal * len(self._formatted_column_name(i)))
+            # computing column name length - taking into account multi-line headers
+            col_name_length = max(len(col_name_line) for col_name_line in self._col_name_as_str_list(i))
+            sep_elements.append(self.sep_horizontal * col_name_length)
         left_border = f'{self.sep_cross}{self.sep_horizontal * self.cell_spacing}' if self.border_left else ''
         right_border = f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}' if self.border_right else ''
         return left_border + self._get_sepline_sep().join(sep_elements) + right_border
@@ -395,20 +418,26 @@ class NiceTable:
         out = []
         for line in range(self.total_lines):
             # 1. get string representation of each cell: get a List[str] per cell as some can be multi-line
-            cell_output_list = []
+            cell_output_list: List[List[str]] = []
             for col in range(self.total_cols):
-                cell_output_list.append(self._formatted_value_list(col, self.columns[col][line]))
-            # 2. compute the number of output lines for this line, based on the longest multi-line cell
-            actual_lines = max(len(cell_element) for cell_element in cell_output_list)
-            # 3. build the output lines for this line - not all cells will have the same number of lines!
-            for actual_line in range(actual_lines):
-                line_elements = []
-                for col in range(self.total_cols):
-                    if actual_line < len(cell_output_list[col]):
-                        line_elements.append(cell_output_list[col][actual_line])
-                    else:
-                        line_elements.append(' ' * self.col_widths[col])
-                out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
+                cell_output_list.append(self._value_as_str_list(col, self.columns[col][line]))
+            out += self._generate_output_lines_elements(cell_output_list)
+        return out
+
+    def _generate_output_lines_elements(self, per_cell_list: List[List[str]]) -> List[str]:
+        """ Get a list of columns, each a list of string values (lines) and generate proper output lines from it"""
+        # 1. compute the number of output lines for this line, based on the longest multi-line cell
+        actual_lines = max(len(cell_element) for cell_element in per_cell_list)
+        # 2. build the output lines for this line - not all cells will have the same number of lines!
+        out = []
+        for actual_line in range(actual_lines):
+            line_elements = []
+            for col in range(self.total_cols):
+                if actual_line < len(per_cell_list[col]):
+                    line_elements.append(per_cell_list[col][actual_line])
+                else:
+                    line_elements.append(' ' * self.col_widths[col])
+            out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
         return out
 
     def set_col_adjust(self, col: Union[int, str], adjust: str) -> None:
