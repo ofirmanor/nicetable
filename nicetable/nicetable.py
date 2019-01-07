@@ -8,6 +8,8 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
+        TODO multi-line: add to readme; cleanup
+        TODO add function to set any column option. Add min/max len, newline, wrap etc to the column
         TODO import table directly from dictionary / JSON
         TODO integrate with SQL result set
         TODO add unittests for each layout
@@ -355,18 +357,6 @@ class NiceTable:
             else:  # wrap long value
                 final_str_list += [s[i:i+self.value_max_len] for i in range(0, len(s), self.value_max_len)]
         return final_str_list
-
-    def _str_to_cell(self, str_value: Optional[Any], adjust: str, pos: int) -> List[str]:
-        """Get a string representation of a value and apply cell adjustment to it"""
-        col_len = max(self.col_widths[pos], self.value_min_len)
-        if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
-            return [str_value.rjust(col_len)]
-        elif adjust in ['center', 'strict_center']:
-            return [str_value.center(col_len)]
-        elif adjust in ['left', 'strict_left', 'auto']:
-            return [str_value.ljust(col_len)]
-        else:  # compact
-            return [str_value.strip().ljust(self.value_min_len)]
 
     def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
         """Get a string representation of a value (List[str] to support multi-line) and apply cell adjustment to it"""
