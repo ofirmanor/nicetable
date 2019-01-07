@@ -29,7 +29,7 @@ class NiceTable:
     FORMATTING_SETTINGS = [  # Name, Type, Default, Description
         ['header', 'bool', True, 'whether the table header will be printed'],
         ['header_sepline', 'bool', True, 'if the header is printed, whether a sepline will be printed after it'],
-        ['header_adjust', 'str', 'left', f'adjust of the column names, one of {HEADER_ADJUST_OPTIONS}'],
+        ['header_adjust', 'str', 'left', f'adjust of the column names, one of:\n  {HEADER_ADJUST_OPTIONS}'],
         ['sep_vertical', 'str', '|', 'a vertical separator string'],
         ['sep_horizontal', 'str', '-', 'a horizontal separator string'],
         ['sep_cross', 'str', '+', 'a crossing separator string (where vertical and horizontal separators meet)'],
@@ -37,12 +37,15 @@ class NiceTable:
         ['border_bottom', 'bool', True, 'whether the table bottom border will be printed'],
         ['border_left', 'bool', True, 'whether the table left border will be printed'],
         ['border_right', 'bool', True, 'whether the table right border will be printed'],
-        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of {COLUMN_ADJUST_OPTIONS}'],
+        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of:\n  {COLUMN_ADJUST_OPTIONS}'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
-        ['value_min_len', 'int', 1, 'minimal string length of a value (shorter value will be space-padded)'],
+        ['value_min_len', 'int', 1, 'minimal string length of a value. Shorter values will be space-padded'],
+        ['value_max_len', 'int', 999, 'maximum string length of a value'],
+        ['value_too_long_policy', 'str', 'something???', 'one of ???'],
+        ['value_newline_replace', 'str', None, 'if set, replace newlines in string value with this'],
         ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
-            f'handling of `sep_vertical` inside a value, one of {VALUE_ESCAPING_OPTIONS}'],
+            f'handling of `sep_vertical` inside a value, one of:\n  {VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
     ]
 
@@ -75,6 +78,9 @@ class NiceTable:
                  cell_adjust: Optional[str] = None,
                  cell_spacing: Optional[int] = None,
                  value_min_len: Optional[int] = None,
+                 value_max_len: Optional[int] = None,
+                 value_too_long_policy: Optional[str] = None,
+                 value_newline_replace: Optional[str] = None,
                  value_none_string: Optional[str] = None,
                  value_escape_type: Optional[str] = None,
                  value_escape_char: Optional[str] = None):
@@ -95,6 +101,9 @@ class NiceTable:
         self.cell_adjust = coalesce(cell_adjust, self.cell_adjust)
         self.cell_spacing = coalesce(cell_spacing, self.cell_spacing)
         self.value_min_len = coalesce(value_min_len, self.value_min_len)
+        self.value_max_len = coalesce(value_max_len, self.value_max_len)
+        self.value_too_long_policy = coalesce(value_too_long_policy, self.value_too_long_policy)
+        self.value_newline_replace = coalesce(value_newline_replace, self.value_newline_replace)
         self.value_none_string = coalesce(value_none_string, self.value_none_string)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
@@ -130,6 +139,9 @@ class NiceTable:
         self.cell_adjust = get_default('cell_adjust')
         self.cell_spacing = get_default('cell_spacing')
         self.value_min_len = get_default('value_min_len')
+        self.value_max_len = get_default('value_max_len')
+        self.value_too_long_policy = get_default('value_too_long_policy')
+        self.value_newline_replace = get_default('value_newline_replace')
         self.value_none_string = get_default('value_none_string')
         self.value_escape_type = get_default('value_escape_type')
         self.value_escape_char = get_default('value_escape_char')
@@ -261,7 +273,7 @@ class NiceTable:
             else:
                 return len(value[:dot_pos]), len(value[dot_pos + 1:])
 
-        # setting initial mutable values for the calls to _formatted_value()
+        # setting initial mutable values for the calls to _formatted_value_list()
         self.col_widths = list(self.value_min_len for _ in range(self.total_cols))
         self.col_is_numeric = list(False for _ in range(self.total_cols))
         self.col_digits_left = list(0 for _ in range(self.total_cols))
@@ -275,7 +287,10 @@ class NiceTable:
                 self.col_digits_right[col_pos] = max(pair[1] for pair in len_pairs_list)
             col_name = self.col_names[col_pos]
             header_len = len(self.value_none_string) if col_name is None else len(col_name)
-            max_data_len = max(len(self._formatted_value(col_pos, value)) for value in self.columns[col_pos])
+            # getting max data length of the column - each cell can be multi-line
+            all_cells_str_lists = (self._formatted_value_list(col_pos, value) for value in self.columns[col_pos])
+            all_col_str = (s for single_cell_list in all_cells_str_lists for s in single_cell_list)
+            max_data_len = max(len(s) for s in all_col_str)
             self.col_widths[col_pos] = max(header_len, max_data_len)
 
     def _get_value_sep(self) -> str:
@@ -286,46 +301,73 @@ class NiceTable:
         """ computes the separator of elements for a separator line, for example '--+--' """
         return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
-    def _to_value_str(self, value: Any, pos: int, adjust: str, is_header: bool) -> str:
-        """Convert value to unadjusted string"""
+    def _value_to_str_list(self, value: Any, pos: int, compact_number: bool, is_header: bool) -> List[str]:
+        """Convert value to a list of unadjusted strings"""
+        # 1. Apply any column-level lambda, if any
         processed_value = value if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](value)
+        # 2. Format the value as a single string, including:
+        #       for numbers: auto adjust if asked - fixed number of fractional digits and left-padding with spaces
+        #       for non-numbers: escaping the sep_vertical character by policy
         if isinstance(processed_value, numbers.Number):
-            if 'strict' in adjust:
-                out = str(processed_value)
+            if compact_number:
+                single_line_str = str(processed_value)
             else:
                 value_length = self.col_digits_left[pos] + self.col_digits_right[pos] + 1
-                out = f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(value_length)
+                single_line_str = f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(value_length)
         else:
             if processed_value is None:
-                out = self.value_none_string
+                single_line_str = self.value_none_string
             elif self.value_escape_type == 'remove':
-                out = str(processed_value).replace(self.sep_vertical, '')
+                single_line_str = str(processed_value).replace(self.sep_vertical, '')
             elif self.value_escape_type == 'replace':
-                out = str(processed_value).replace(self.sep_vertical, self.value_escape_char)
+                single_line_str = str(processed_value).replace(self.sep_vertical, self.value_escape_char)
             elif self.value_escape_type == 'prefix':
-                out = str(processed_value).replace(self.sep_vertical, self.value_escape_char + self.sep_vertical)
+                single_line_str = str(processed_value).replace(self.sep_vertical,
+                                                               self.value_escape_char + self.sep_vertical)
             else:  # 'ignore'
-                out = str(processed_value)
-        return out
+                single_line_str = str(processed_value)
+        # 3. Handle newlines in the string
+        if self.value_newline_replace is None:
+            str_list = single_line_str.split('\n')
+        else:
+            str_list = [single_line_str.replace('\n', self.value_newline_replace)]
+        # 4. Handle long lines based on the table policy
+        pass  # TODO
+        return str_list
 
-    def _to_cell_str(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> str:
+    def _str_to_cell(self, str_value: Optional[Any], adjust: str, pos: int) -> List[str]:
         """Get a string representation of a value and apply cell adjustment to it"""
-        str_value = self._to_value_str(value, pos, adjust, is_header)
         col_len = max(self.col_widths[pos], self.value_min_len)
         if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
-            return str_value.rjust(col_len)
+            return [str_value.rjust(col_len)]
         elif adjust in ['center', 'strict_center']:
-            return str_value.center(col_len)
+            return [str_value.center(col_len)]
         elif adjust in ['left', 'strict_left', 'auto']:
-            return str_value.ljust(col_len)
+            return [str_value.ljust(col_len)]
         else:  # compact
-            return str_value.strip().ljust(self.value_min_len)
+            return [str_value.strip().ljust(self.value_min_len)]
+
+    def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
+        """Get a string representation of a value and apply cell adjustment to it"""
+        compact_number = adjust.startswith('strict') or adjust == 'compact'
+        str_list = self._value_to_str_list(value, pos, compact_number, is_header)
+
+        col_len = max(self.col_widths[pos], self.value_min_len)
+        if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
+            adjusted_str_list = list(value.rjust(col_len) for value in str_list)
+        elif adjust in ['center', 'strict_center']:
+            adjusted_str_list = list(value.center(col_len) for value in str_list)
+        elif adjust in ['left', 'strict_left', 'auto']:
+            adjusted_str_list = list(value.ljust(col_len) for value in str_list)
+        else:  # compact
+            adjusted_str_list = list(value.strip().ljust(self.value_min_len) for value in str_list)
+        return adjusted_str_list
 
     def _formatted_column_name(self, pos: int) -> str:
-        return self._to_cell_str(self.col_names[pos], self.header_adjust, pos, True)
+        return self._to_cell_str_list(self.col_names[pos], self.header_adjust, pos, True)[0]  # FIXME multi-line header
 
-    def _formatted_value(self, pos: int, value: Any) -> str:
-        return self._to_cell_str(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
+    def _formatted_value_list(self, pos: int, value: Any) -> List[str]:
+        return self._to_cell_str_list(value, self.col_adjust[pos] or self.cell_adjust, pos, False)
 
     def _wrap_line_with_borders(self, line: str) -> str:
         left_border = f'{self.sep_vertical}{" " * self.cell_spacing}' if self.border_left else ''
@@ -352,10 +394,21 @@ class NiceTable:
         """Generate data lines as list of lines"""
         out = []
         for line in range(self.total_lines):
-            output_elements = []
+            # 1. get string representation of each cell: get a List[str] per cell as some can be multi-line
+            cell_output_list = []
             for col in range(self.total_cols):
-                output_elements.append(self._formatted_value(col, self.columns[col][line]))
-            out.append(self._wrap_line_with_borders(self._get_value_sep().join(output_elements)))
+                cell_output_list.append(self._formatted_value_list(col, self.columns[col][line]))
+            # 2. compute the number of output lines for this line, based on the longest multi-line cell
+            actual_lines = max(len(cell_element) for cell_element in cell_output_list)
+            # 3. build the output lines for this line - not all cells will have the same number of lines!
+            for actual_line in range(actual_lines):
+                line_elements = []
+                for col in range(self.total_cols):
+                    if actual_line < len(cell_output_list[col]):
+                        line_elements.append(cell_output_list[col][actual_line])
+                    else:
+                        line_elements.append(' ' * self.col_widths[col])
+                out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
         return out
 
     def set_col_adjust(self, col: Union[int, str], adjust: str) -> None:

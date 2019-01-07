@@ -3,9 +3,6 @@ from nicetable.nicetable import NiceTable
 from typing import List
 import json
 
-# import sys
-# print(f'PATH:\n{sys.path}')
-
 
 class LayoutOptions(TestCase):
     """ Tests the effects of setting different layout options"""
@@ -166,9 +163,9 @@ class LayoutOptions(TestCase):
 
         self.tbl.cell_adjust = 'compact'
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('|  Pikachu  |  Electric  |  40  |  6.100  |',
+        self.assertEqual('|  Pikachu  |  Electric  |  40  |  6.1  |',
                          data_line,
-                         'compact data (cell_spacing == 2) still applies')
+                         'compact data; (cell_spacing == 2) still applies, numbers appear in the output as-is')
 
     def test__value_min_len(self):
         self.tbl.value_min_len = 5
@@ -182,6 +179,24 @@ class LayoutOptions(TestCase):
         self.assertEqual('|  Pikachu        |  Electric       |             40  |          6.100  |',
                          data_line,
                          'long value_min_len - no column should be less than 13 characters')
+
+    def test__value_newline_replace(self):
+        self.tbl.columns[1][0] = 'Grass\nPoison'
+        self.tbl.value_newline_replace = ' and '
+        data_line = str(self.tbl).splitlines()[3]
+        self.assertEqual('|  Bulbasaur  |  Grass and Poison  |          70  |       6.901  |',
+                         data_line,
+                         'replace newline with a string. In this case, it made the column length to grow')
+
+        self.tbl.value_newline_replace = None
+        data_line1 = str(self.tbl).splitlines()[3]
+        data_line2 = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  Bulbasaur  |  Grass     |          70  |       6.901  |',
+                         data_line1,
+                         'newline is splitting the value into two lines (line1)')
+        self.assertEqual('|             |  Poison    |              |              |',
+                         data_line2,
+                         'newline is splitting the value into two lines (line2)')
 
     def test__value_none_string__header(self):
         self.tbl.col_names[1] = None
