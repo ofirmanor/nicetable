@@ -91,12 +91,34 @@ Note that the `default` layout adjusts the column values with `auto` adjustment:
 2. In each numeric column, numbers are printed with the same number of fractional digits, so they align nicely.  
 For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all printed well-aligned.
 
-## Formatting settings
-#### Table-level settings
-You can override any table-level settings by assigning a value to their instance variable, for example:  
-`out.header = False`   
+## Main formatting settings
+#### Cell adjustment
+Cell contents can be adjusted `left`, `center` or `right`, or kept as-is with `compact` adjust.  
+Numeric columns (those with only numbers or None values) are by default automatically well-aligned.
+This means they are converted to a fixed-width string (spaces on the left, zeros on the right.
+If that is not desirable, use a strict alignment instead, for example `strict_left`. For example:
+````
++-------------------+---------------------+--------------------+---------------+-----------------+----------------+
+|  non-strict left  |  non-strict center  |  non-strict right  |  strict_left  |  strict_center  |  strict_right  |
++-------------------+---------------------+--------------------+---------------+-----------------+----------------+
+|    6.901          |         6.901       |             6.901  |  6.901        |      6.901      |         6.901  |
+|    6.000          |         6.000       |             6.000  |  6            |        6        |             6  |
+|    1.000          |         1.000       |             1.000  |  1            |        1        |             1  |
+|  122.000          |       122.000       |           122.000  |  122          |       122       |           122  |
++-------------------+---------------------+--------------------+---------------+-----------------+----------------+
+````
+*The example above uses long column names on purpose, otherwise `left`, `center` and `right` would look the same,
+as all the numbers in each column are converted to a fixed-width string.*
 
-Here is the list of formatting settings:
+#### Text wrapping and newlines
+
+#### Escaping
+
+
+
+## Table-level settings
+Below is the list of the table-level settings, which you can directly set. 
+For example - `out.header = False`   
 
 |  Setting            |  Type  |  Default  |  Description                                                                                                                  |
 |---------------------|--------|-----------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -127,6 +149,8 @@ for setting in NiceTable.FORMATTING_SETTINGS:
 out.set_col_adjust('Default', 'strict_left')
 print(out)
 ````
+
+
 
 #### Column-level settings
 There are some column-level settings that you can control.  
