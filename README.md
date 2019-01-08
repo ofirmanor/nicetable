@@ -31,7 +31,7 @@ for layout in NiceTable.builtin_layouts():
     out.append(layout)
 print(out)
 ````
-Output
+Output:
 ````
 +-----------+------------------------------------------------------------------------------------------------------+
 |  Layout   |  Description                                                                                         |
@@ -103,13 +103,54 @@ To print them as strings, add a `strict_` prefix to the adjust, like `strict_lef
 +-----------------+-------------------+------------------+---------------+-----------------+----------------+
 ````
 *The example above uses long column names on purpose, otherwise `left`, `center` and `right` would look the same,
-as all the numbers in each column have the same fixed width, based on the longest column value.*
+as all the numbers in each column have the same fixed width (based on their longest column value).*
 
 ## Text wrapping and newlines
-`NiceTable` supports handling long values an newlines in both column names and cell values.  
+`NiceTable` supports handling long values and newlines in both column names and cell values.  
+#### Text wrapping
+When a value is longer than `value_max_len`, it handled by a `value_too_long_policy` policy.  
+The default policy is `wrap`, which means the value will be broken to multiple lines every `value_max_len` characters.  
+Alternatively, specify the `truncate` policy to have to values truncated.  
+The following examples demonstrates the two policies:
+````python
+out = NiceTable(['Code', 'Product Description(Long)'])
+out.append([1, 'Boeing 777. Batteries not included. May contain nuts.'])
+out.append([2, 'Sack of sand'])
+print(out)
+out.value_max_len = 19
+print(out)
+out.value_too_long_policy = 'truncate'
+print(out)
+````
+Output:
+````
++--------+---------------------------------------------------------+
+|  Code  |  Product Description(Long)                              |
++--------+---------------------------------------------------------+
+|     1  |  Boeing 777. Batteries not included. May contain nuts.  |
+|     2  |  Sack of sand                                           |
++--------+---------------------------------------------------------+
+
++--------+-----------------------+
+|  Code  |  Product Description  |
+|        |  (Long)               |
++--------+-----------------------+
+|     1  |  Boeing 777. Batteri  |
+|        |  es not included. Ma  |
+|        |  y contain nuts.      |
+|     2  |  Sack of sand         |
++--------+-----------------------+
+
++--------+-----------------------+
+|  Code  |  Product Description  |
++--------+-----------------------+
+|     1  |  Boeing 777. Batteri  |
+|     2  |  Sack of sand         |
++--------+-----------------------+
+````
 #### Newlines 
-When newlines are encountered in a column name or a value, they by default cause the text to wrap.  
-Alternatively, you can ask that newlines will be replaced, by setting `value_newline_replace` to an alternative string (default is `None`).
+When newlines are encountered in a column name or a value, they by default cause the text to wrap.  Alternatively, you can ask that newlines will be replaced, by setting `value_newline_replace` to an alternative string (default is `None`).  
+The following example first shows the default behavior, and than shows replacing newlines with the string `\n`:
 ````python
 out = NiceTable(['Code', 'Product Description\n(Long)'])
 out.append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.'])
@@ -118,7 +159,7 @@ print(out)
 out.value_newline_replace = '\\n'
 print(out)
 ````
-Output
+Output:
 ````
 +--------+---------------------------+
 |  Code  |  Product Description      |
@@ -137,13 +178,8 @@ Output
 |     2  |  Sack of sand                                            |
 +--------+----------------------------------------------------------+
 ````
-#### Text wrapping
-When a value is longer than `value_max_len`, it handled by a `value_too_long_policy` policy.  
-The default policy is `wrap`, which means the value will be broken to multiple lines every `value_max_len` characters.  
-Alternatively, specify the `truncate` policy to have to values truncated.  
-TODO example here
-
 ## Escaping
+TODO...  
 value_escape_type  
 value_escape_char
 

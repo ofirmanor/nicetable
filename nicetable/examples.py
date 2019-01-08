@@ -57,6 +57,16 @@ nlist = [6.901, 6,1, 122]
 out.col_adjust = ['left', 'center', 'right', 'strict_left', 'strict_center', 'strict_right']
 print(out)
 
+# Example: long text
+out = NiceTable(['Code', 'Product Description(Long)'])
+out.append([1, 'Boeing 777. Batteries not included. May contain nuts.'])
+out.append([2, 'Sack of sand'])
+print(out)
+out.value_max_len = 19
+print(out)
+out.value_too_long_policy = 'truncate'
+print(out)
+
 # Example: newlines
 out = NiceTable(['Code', 'Product Description\n(Long)'])
 out.append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.'])
