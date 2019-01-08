@@ -30,7 +30,7 @@ class NiceTable:
     FORMATTING_SETTINGS = [  # Name, Type, Default, Description
         ['header', 'bool', True, 'whether the table header will be printed'],
         ['header_sepline', 'bool', True, 'if the header is printed, whether a sepline will be printed after it'],
-        ['header_adjust', 'str', 'left', f'adjust of the column names, one of:\n  {HEADER_ADJUST_OPTIONS}'],
+        ['header_adjust', 'str', 'left', f'adjust of the column names, one of: {HEADER_ADJUST_OPTIONS}'],
         ['sep_vertical', 'str', '|', 'a vertical separator string'],
         ['sep_horizontal', 'str', '-', 'a horizontal separator string'],
         ['sep_cross', 'str', '+', 'a crossing separator string (where vertical and horizontal separators meet)'],
@@ -38,16 +38,16 @@ class NiceTable:
         ['border_bottom', 'bool', True, 'whether the table bottom border will be printed'],
         ['border_left', 'bool', True, 'whether the table left border will be printed'],
         ['border_right', 'bool', True, 'whether the table right border will be printed'],
-        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of:\n  {COLUMN_ADJUST_OPTIONS}'],
+        ['cell_adjust', 'str', 'auto', f'adjust of the values, one of: {COLUMN_ADJUST_OPTIONS}'],
         ['cell_spacing', 'int', 2, 'number of spaces to add to each side of a value'],
         ['value_min_len', 'int', 1, 'minimal string length of a value. Shorter values will be space-padded'],
         ['value_max_len', 'int', 9999, 'maximum string length of a value'],
         ['value_too_long_policy', 'str', 'wrap',
-            f'handling of a string longer than `value_max_len`, one of:\n  {VALUE_TOO_LONG_POLICY} '],
+            f'handling of a string longer than `value_max_len`, one of: {VALUE_TOO_LONG_POLICY} '],
         ['value_newline_replace', 'str', None, 'if set, replace newlines in string value with this'],
         ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
-            f'handling of `sep_vertical` inside a value, one of:\n  {VALUE_ESCAPING_OPTIONS}'],
+            f'handling of `sep_vertical` inside a value, one of: {VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
     ]
 

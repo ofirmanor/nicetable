@@ -48,3 +48,11 @@ for pokemon in json.loads(NiceTable.SAMPLE_JSON):
 out.set_col_func(0, lambda x: x.upper())
 out.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
 print(out)
+
+
+# Example: different numeric alignments
+out = NiceTable(['standard left', 'standard center', 'standard right', 'strict_left', 'strict_center', 'strict_right'])
+nlist = [6.901, 6,1, 122]
+[out.append([n] * 6) for n in nlist]
+out.col_adjust = ['left', 'center', 'right', 'strict_left', 'strict_center', 'strict_right']
+print(out)

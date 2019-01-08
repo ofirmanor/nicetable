@@ -1,6 +1,6 @@
 # nicetable
 * A clean and elegant way to print text tables in Python with minimal boilerplate code.
-* Built with modern Python, including type annotations. Requires Python 3.6 and up.
+* Built with modern Python (including type annotations) and have extensive test suite. Requires Python 3.6 and up.
 
 ## Basics
 Typical usage includes:
@@ -46,13 +46,10 @@ print(out)
 #### Layouts and formatting settings
 You can pick a table layout in the constructor, with the `layout=` parameter.  
 In addition, you can change the layout or override any other formatting settings at any time, if needed.  
-*Internally, `append()` just stores the values as-is.
-The values are converted to strings only when the table is printed.*  
+*Internally, `append()` just stores the values as-is. The values are converted to strings only when the table is printed.*  
 
 The next example uses the builtin `NiceTable.SAMPLE_JSON`, which returns some sample JSON data.  
-The code loops over a list of dictionaries, cherry-picking some values into the table columns.
-It prints the table, than changes the layout to `csv` and overrides a formatting option
-(changes the separator from `,` to `|`) before printing it again.
+The code loops over a list of dictionaries, cherry-picking some values into the table columns. It prints the table, than changes the layout to `csv` and overrides a formatting option (changes the separator from `,` to `|`) before printing it again.
 ````python
 import json
 from nicetable.nicetable import NiceTable
@@ -93,19 +90,19 @@ For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all pri
 
 ## Main formatting settings
 #### Cell adjustment
-Cell contents can be adjusted `left`, `center` or `right`, or kept as-is with `compact` adjust.  
-Numeric columns (those with only numbers or None values) are by default automatically well-aligned.
-This means they are converted to a fixed-width string (spaces on the left, zeros on the right.
-If that is not desirable, use a strict alignment instead, for example `strict_left`. For example:
+Cell contents are automatically space-padded to the width of the longest value (or `value_max_len`), unless adjustment is `compat`.  
+Cell contents can be otherwise adjusted `left`, `center` or `right`.  
+The default is `auto`, meaning that numeric columns (those with only numbers or None values) are adjusted `right`, and non-numeric columns are adjusted `left`.  
+Numeric columns automatically well-aligned, meaning all their ones digit are printed in the same position. To print them as strings, add a `strict_` prefix to the adjust, like `strict_left`. For example:
 ````
-+-------------------+---------------------+--------------------+---------------+-----------------+----------------+
-|  non-strict left  |  non-strict center  |  non-strict right  |  strict_left  |  strict_center  |  strict_right  |
-+-------------------+---------------------+--------------------+---------------+-----------------+----------------+
-|    6.901          |         6.901       |             6.901  |  6.901        |      6.901      |         6.901  |
-|    6.000          |         6.000       |             6.000  |  6            |        6        |             6  |
-|    1.000          |         1.000       |             1.000  |  1            |        1        |             1  |
-|  122.000          |       122.000       |           122.000  |  122          |       122       |           122  |
-+-------------------+---------------------+--------------------+---------------+-----------------+----------------+
++-----------------+-------------------+------------------+---------------+-----------------+----------------+
+|  standard left  |  standard center  |  standard right  |  strict_left  |  strict_center  |  strict_right  |
++-----------------+-------------------+------------------+---------------+-----------------+----------------+
+|    6.901        |        6.901      |           6.901  |  6.901        |      6.901      |         6.901  |
+|    6.000        |        6.000      |           6.000  |  6            |        6        |             6  |
+|    1.000        |        1.000      |           1.000  |  1            |        1        |             1  |
+|  122.000        |      122.000      |         122.000  |  122          |       122       |           122  |
++-----------------+-------------------+------------------+---------------+-----------------+----------------+
 ````
 *The example above uses long column names on purpose, otherwise `left`, `center` and `right` would look the same,
 as all the numbers in each column are converted to a fixed-width string.*
@@ -118,26 +115,29 @@ as all the numbers in each column are converted to a fixed-width string.*
 
 ## Table-level settings
 Below is the list of the table-level settings, which you can directly set. 
-For example - `out.header = False`   
+For example: `out.header = False`   
 
-|  Setting            |  Type  |  Default  |  Description                                                                                                                  |
-|---------------------|--------|-----------|-------------------------------------------------------------------------------------------------------------------------------|
-|  header             |  bool  |  True     |  whether the table header will be printed                                                                                     |
-|  header_sepline     |  bool  |  True     |  if the header is printed, whether a sepline will be printed after it                                                         |
-|  header_adjust      |  str   |  left     |  adjust of the column names, one of ['left', 'center', 'right', 'compact']                                                    |
-|  sep_vertical       |  str   |  \|       |  a vertical separator string                                                                                                  |
-|  sep_horizontal     |  str   |  -        |  a horizontal separator string                                                                                                |
-|  sep_cross          |  str   |  +        |  a crossing separator string (where vertical and horizontal separators meet)                                                  |
-|  border_top         |  bool  |  True     |  whether the table top border will be printed                                                                                 |
-|  border_bottom      |  bool  |  True     |  whether the table bottom border will be printed                                                                              |
-|  border_left        |  bool  |  True     |  whether the table left border will be printed                                                                                |
-|  border_right       |  bool  |  True     |  whether the table right border will be printed                                                                               |
-|  cell_adjust        |  str   |  auto     |  adjust of the values, one of ['auto', 'left', 'center', 'right', 'compact', 'strict_left', 'strict_center', 'strict_right']  |
-|  cell_spacing       |  int   |  2        |  number of spaces to add to each side of a value                                                                              |
-|  value_min_len      |  int   |  1        |  minimal string length of a value (shorter value will be space-padded)                                                        |
-|  value_none_string  |  str   |  N/A      |  string representation of the None value                                                                                      |
-|  value_escape_type  |  str   |  ignore   |  handling of `sep_vertical` inside a value, one of ['remove', 'replace', 'prefix', 'ignore']                                  |
-|  value_escape_char  |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                   |
+|  Setting                |  Type  |  Default  |  Description                                                                                                                   |
+|-------------------------|--------|-----------|--------------------------------------------------------------------------------------------------------------------------------|
+|  header                 |  bool  |  True     |  whether the table header will be printed                                                                                      |
+|  header_sepline         |  bool  |  True     |  if the header is printed, whether a sepline will be printed after it                                                          |
+|  header_adjust          |  str   |  left     |  adjust of the column names, one of: ['left', 'center', 'right', 'compact']                                                    |
+|  sep_vertical           |  str   |  \|       |  a vertical separator string                                                                                                   |
+|  sep_horizontal         |  str   |  -        |  a horizontal separator string                                                                                                 |
+|  sep_cross              |  str   |  +        |  a crossing separator string (where vertical and horizontal separators meet)                                                   |
+|  border_top             |  bool  |  True     |  whether the table top border will be printed                                                                                  |
+|  border_bottom          |  bool  |  True     |  whether the table bottom border will be printed                                                                               |
+|  border_left            |  bool  |  True     |  whether the table left border will be printed                                                                                 |
+|  border_right           |  bool  |  True     |  whether the table right border will be printed                                                                                |
+|  cell_adjust            |  str   |  auto     |  adjust of the values, one of: ['auto', 'left', 'center', 'right', 'compact', 'strict_left', 'strict_center', 'strict_right']  |
+|  cell_spacing           |  int   |  2        |  number of spaces to add to each side of a value                                                                               |
+|  value_min_len          |  int   |  1        |  minimal string length of a value. Shorter values will be space-padded                                                         |
+|  value_max_len          |  int   |  9999     |  maximum string length of a value                                                                                              |
+|  value_too_long_policy  |  str   |  wrap     |  handling of a string longer than `value_max_len`, one of: ['truncate', 'wrap']                                                |
+|  value_newline_replace  |  str   |  N/A      |  if set, replace newlines in string value with this                                                                            |
+|  value_none_string      |  str   |  N/A      |  string representation of the None value                                                                                       |
+|  value_escape_type      |  str   |  ignore   |  handling of `sep_vertical` inside a value, one of:  ['remove', 'replace', 'prefix', 'ignore']                                 |
+|  value_escape_char      |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                    |
 
 *The table above was generated by iterating on `NiceTable.FORMATTING_SETTINGS` and using the `md` layout:*
 ````python
@@ -146,11 +146,8 @@ from nicetable.nicetable import NiceTable
 out = NiceTable(['Setting', 'Type', 'Default', 'Description'], layout='md')
 for setting in NiceTable.FORMATTING_SETTINGS:
     out.append(setting)
-out.set_col_adjust('Default', 'strict_left')
 print(out)
 ````
-
-
 
 #### Column-level settings
 There are some column-level settings that you can control.  
