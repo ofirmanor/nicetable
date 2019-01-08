@@ -8,7 +8,6 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO multi-line: add to readme; cleanup
         TODO add function to set any column option. Add min/max len, newline, wrap etc to the column
         TODO import table directly from dictionary / JSON
         TODO integrate with SQL result set
@@ -430,43 +429,36 @@ class NiceTable:
             out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
         return out
 
-    def set_col_adjust(self, col: Union[int, str], adjust: str) -> None:
-        if adjust not in self.COLUMN_ADJUST_OPTIONS:
-            raise ValueError('NiceTable.set_col_adjust(): '
-                             f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
+    def set_col_options(self,
+                        col: Union[int, str],
+                        adjust: Optional[str] = None,
+                        func: Optional[Callable[[Any], Any]] = None):
         if isinstance(col, int):
             if col < 0 or col >= self.total_cols:
-                raise IndexError("NiceTable.set_col_adjust(): " +
+                raise IndexError("NiceTable.set_col_options(): " +
                                  f'got col index {col}, expecting index in the range of "0..{self.total_cols -1}"')
-            self.col_adjust[col] = adjust
+            col_pos = col
         elif isinstance(col, str):
             if col not in self.col_names:
-                raise IndexError("NiceTable.set_col_adjust(): " +
+                raise IndexError("NiceTable.set_col_options(): " +
                                  f'got col name "{col}", expecting one of {self.col_names}')
-            self.col_adjust[self.col_names.index(col)] = adjust
+            col_pos = self.col_names.index(col)
         else:
-            raise TypeError('NiceTable.set_col_adjust(): '
-                            f'expects str or int (column name or position), got {type(col)}')
-
-    def set_col_func(self, col: Union[int, str], func: Optional[Callable[[Any], Any]]) -> None:
-        if func is not None and not hasattr(func, '__call__'):
-            raise TypeError("NiceTable.set_col_func(): " +
-                            f"second parameter should be a function, got {type(func)}")
-
-        if isinstance(col, int):
-            if col < 0 or col >= self.total_cols:
-                raise IndexError("NiceTable.set_col_func(): " +
-                                 f'got col index {col}, expecting index in the range of "0..{self.total_cols -1}"')
-            self.col_funcs[col] = func
-        elif isinstance(col, str):
-            # noinspection PyTypeChecker
-            if col not in self.col_names:
-                raise IndexError("NiceTable.set_col_func(): " +
-                                 f'got col value "{col}", expecting one of {self.col_names}')
-            self.col_funcs[self.col_names.index(col)] = func
-        else:
-            raise TypeError('NiceTable.set_col_func(): '
+            raise TypeError('NiceTable.set_col_options(): '
                             f'first parameter should be str or int (column name or position), got {type(col)}')
+
+        if adjust is not None:
+            if adjust not in self.COLUMN_ADJUST_OPTIONS:
+                raise ValueError('NiceTable.set_col_options(): '
+                                 f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
+            self.col_adjust[col_pos] = adjust
+
+        if func is not None and not hasattr(func, '__call__'):
+            raise TypeError("NiceTable.set_col_options(): " +
+                            f"func parameter should be a function, got {type(func)}")
+        else:
+            self.col_funcs[col_pos] = func
+
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):

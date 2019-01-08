@@ -51,8 +51,8 @@ print(out)
 
 # Example: different numeric alignments
 out = NiceTable(['standard left', 'standard center', 'standard right', 'strict_left', 'strict_center', 'strict_right'])
-nlist = [6.901, 6,1, 122]
-[out.append([n] * 6) for n in nlist]
+n_list = [6.901, 6,1, 122]
+[out.append([n] * 6) for n in n_list]
 out.col_adjust = ['left', 'center', 'right', 'strict_left', 'strict_center', 'strict_right']
 print(out)
 
