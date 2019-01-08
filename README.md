@@ -88,12 +88,12 @@ Note that the `default` layout adjusts the column values with `auto` adjustment:
 2. In each numeric column, numbers are printed with the same number of fractional digits, so they align nicely.  
 For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all printed well-aligned.
 
-## Main formatting settings
-#### Cell adjustment
-Cell contents are automatically space-padded to the width of the longest value (or `value_max_len`), unless adjustment is `compat`.  
-Cell contents can be otherwise adjusted `left`, `center` or `right`.  
-The default is `auto`, meaning that numeric columns (those with only numbers or None values) are adjusted `right`, and non-numeric columns are adjusted `left`.  
-Numeric columns automatically well-aligned, meaning all their ones digit are printed in the same position. To print them as strings, add a `strict_` prefix to the adjust, like `strict_left`. For example:
+## Cell adjustment
+* Cell contents can be adjusted `left`, `center` or `right` and are space-padded to the width of the longest value in the column.  
+Alternatively, cell contents can be kept as-is with `compact` adjustment, though it means that the table vertical lines will not align (this is used in some layouts such as `csv`).
+* The default adjustment is `auto`, meaning that numeric columns (those with only numbers or None values) are adjusted `right`, and non-numeric columns are adjusted `left`.  
+* Numeric columns automatically well-aligned, meaning all their ones digit are printed in the same position.  
+To print them as strings, add a `strict_` prefix to the adjust, like `strict_left`. For example:
 ````
 +-----------------+-------------------+------------------+---------------+-----------------+----------------+
 |  standard left  |  standard center  |  standard right  |  strict_left  |  strict_center  |  strict_right  |
@@ -105,11 +105,11 @@ Numeric columns automatically well-aligned, meaning all their ones digit are pri
 +-----------------+-------------------+------------------+---------------+-----------------+----------------+
 ````
 *The example above uses long column names on purpose, otherwise `left`, `center` and `right` would look the same,
-as all the numbers in each column are converted to a fixed-width string.*
+as all the numbers in each column are converted to a fixed-width string based on the longest value.*
 
-#### Text wrapping and newlines
+## Text wrapping and newlines
 
-#### Escaping
+## Escaping
 
 
 
@@ -149,7 +149,7 @@ for setting in NiceTable.FORMATTING_SETTINGS:
 print(out)
 ````
 
-#### Column-level settings
+## Column-level settings
 There are some column-level settings that you can control.  
 For each, you can specify the affected column by the column name or by the column position.  
 
