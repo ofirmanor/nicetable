@@ -31,7 +31,7 @@ for layout in NiceTable.builtin_layouts():
     out.append(layout)
 print(out)
 ````
-**Output**
+Output
 ````
 +-----------+------------------------------------------------------------------------------------------------------+
 |  Layout   |  Description                                                                                         |
@@ -83,13 +83,11 @@ Bulbasaur|Grass/Poison|70|6.901
 Pikachu|Electric|40|6.1
 Mewtwo|Psychic|200|122
 ````
-Note that the `default` layout adjusts the column values with `auto` adjustment:
-1. Strings are aligned to the left, numbers are aligned to the right.
-2. In each numeric column, numbers are printed with the same number of fractional digits, so they align nicely.  
-For example, the last column input is 6.901, 6.1 (`float`), 122 (`int`), all printed well-aligned.
+*Note that the `default` layout automatically identify numeric columns and print them well-aligned to the right (see next section).*  
+*For example, the last column input was 6.901, 6.1 (`float`), 122 (`int`), as can be seen in the `csv` output.*
 
 ## Cell adjustment
-* Cell contents can be adjusted `left`, `center` or `right` and are space-padded to the width of the longest value in the column.  
+* Cell contents can be adjusted `left`, `center` or `right`, and are space-padded to the width of the longest value in the column (see also next section on wrapping). 
 Alternatively, cell contents can be kept as-is with `compact` adjustment, though it means that the table vertical lines will not align (this is used in some layouts such as `csv`).
 * The default adjustment is `auto`, meaning that numeric columns (those with only numbers or None values) are adjusted `right`, and non-numeric columns are adjusted `left`.  
 * Numeric columns automatically well-aligned, meaning all their ones digit are printed in the same position.  
@@ -105,13 +103,49 @@ To print them as strings, add a `strict_` prefix to the adjust, like `strict_lef
 +-----------------+-------------------+------------------+---------------+-----------------+----------------+
 ````
 *The example above uses long column names on purpose, otherwise `left`, `center` and `right` would look the same,
-as all the numbers in each column are converted to a fixed-width string based on the longest value.*
+as all the numbers in each column have the same fixed width, based on the longest column value.*
 
 ## Text wrapping and newlines
+`NiceTable` supports handling long values an newlines in both column names and cell values.  
+#### Newlines 
+When newlines are encountered in a column name or a value, they by default cause the text to wrap.  
+Alternatively, you can ask that newlines will be replaced, by setting `value_newline_replace` to an alternative string (default is `None`).
+````python
+out = NiceTable(['Code', 'Product Description\n(Long)'])
+out.append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.'])
+out.append([2, 'Sack of sand'])
+print(out)
+out.value_newline_replace = '\\n'
+print(out)
+````
+Output
+````
++--------+---------------------------+
+|  Code  |  Product Description      |
+|        |  (Long)                   |
++--------+---------------------------+
+|     1  |  Boeing 777               |
+|        |  Batteries not included.  |
+|        |  May contain nuts.        |
+|     2  |  Sack of sand             |
++--------+---------------------------+
+
++--------+----------------------------------------------------------+
+|  Code  |  Product Description\n(Long)                             |
++--------+----------------------------------------------------------+
+|     1  |  Boeing 777\nBatteries not included.\nMay contain nuts.  |
+|     2  |  Sack of sand                                            |
++--------+----------------------------------------------------------+
+````
+#### Text wrapping
+When a value is longer than `value_max_len`, it handled by a `value_too_long_policy` policy.  
+The default policy is `wrap`, which means the value will be broken to multiple lines every `value_max_len` characters.  
+Alternatively, specify the `truncate` policy to have to values truncated.  
+TODO example here
 
 ## Escaping
-
-
+value_escape_type  
+value_escape_char
 
 ## Table-level settings
 Below is the list of the table-level settings, which you can directly set. 

@@ -56,3 +56,11 @@ nlist = [6.901, 6,1, 122]
 [out.append([n] * 6) for n in nlist]
 out.col_adjust = ['left', 'center', 'right', 'strict_left', 'strict_center', 'strict_right']
 print(out)
+
+# Example: newlines
+out = NiceTable(['Code', 'Product Description\n(Long)'])
+out.append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.'])
+out.append([2, 'Sack of sand'])
+print(out)
+out.value_newline_replace = '\\n'
+print(out)
