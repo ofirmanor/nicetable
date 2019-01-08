@@ -45,7 +45,7 @@ class NiceTable:
         ['value_too_long_policy', 'str', 'wrap',
             f'handling of a string longer than `value_max_len`, one of: {VALUE_TOO_LONG_POLICY} '],
         ['value_newline_replace', 'str', None, 'if set, replace newlines in string value with this'],
-        ['value_none_string', 'str', 'N/A', 'string representation of the None value'],
+        ['value_none_string', 'str', 'None', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
             f'handling of `sep_vertical` inside a value, one of: {VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']

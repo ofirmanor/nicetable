@@ -1,6 +1,6 @@
 # nicetable
 * A clean and elegant way to print text tables in Python with minimal boilerplate code.
-* Built with modern Python (including type annotations) and have extensive test suite. Requires Python 3.6 and up.
+* Built with modern Python (including type annotations) and has an extensive test suite. Requires Python 3.6 and up.
 
 ## Basics
 Typical usage includes:
@@ -46,7 +46,7 @@ Output:
 #### Layouts and formatting settings
 You can pick a table layout in the constructor, with the `layout=` parameter.  
 In addition, you can change the layout or override any other formatting settings at any time, if needed.  
-*Internally, `append()` just stores the values as-is. The values are converted to strings only when the table is printed.*  
+*Internally, `NiceTable` stores the values as-is, and generates formatted strings from them only when the table is printed.*  
 
 The next example uses the builtin `NiceTable.SAMPLE_JSON`, which returns some sample JSON data.  
 The code loops over a list of dictionaries, cherry-picking some values into the table columns. It prints the table, than changes the layout to `csv` and overrides a formatting option (changes the separator from `,` to `|`) before printing it again.
@@ -87,7 +87,7 @@ Mewtwo|Psychic|200|122
 *For example, the last column input was 6.901, 6.1 (`float`), 122 (`int`), as can be seen in the `csv` output.*
 
 ## Cell adjustment
-* Cell contents can be adjusted `left`, `center` or `right`, and are space-padded to the width of the longest value in the column (see also next section on wrapping). 
+* Cell contents can be adjusted `left`, `center` or `right`, and are space-padded to the width of the longest value in the column (see also next section on wrapping).  
 Alternatively, cell contents can be kept as-is with `compact` adjustment, though it means that the table vertical lines will not align (this is used in some layouts such as `csv`).
 * The default adjustment is `auto`, meaning that numeric columns (those with only numbers or None values) are adjusted `right`, and non-numeric columns are adjusted `left`.  
 * Numeric columns automatically well-aligned, meaning all their ones digit are printed in the same position.  
@@ -204,8 +204,8 @@ For example: `out.header = False`
 |  value_min_len          |  int   |  1        |  minimal string length of a value. Shorter values will be space-padded                                                         |
 |  value_max_len          |  int   |  9999     |  maximum string length of a value                                                                                              |
 |  value_too_long_policy  |  str   |  wrap     |  handling of a string longer than `value_max_len`, one of: ['truncate', 'wrap']                                                |
-|  value_newline_replace  |  str   |  N/A      |  if set, replace newlines in string value with this                                                                            |
-|  value_none_string      |  str   |  N/A      |  string representation of the None value                                                                                       |
+|  value_newline_replace  |  str   |  None     |  if set, replace newlines in string value with this                                                                            |
+|  value_none_string      |  str   |  None     |  string representation of the None value                                                                                       |
 |  value_escape_type      |  str   |  ignore   |  handling of `sep_vertical` inside a value, one of:  ['remove', 'replace', 'prefix', 'ignore']                                 |
 |  value_escape_char      |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                    |
 

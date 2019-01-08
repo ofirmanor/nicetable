@@ -267,13 +267,10 @@ class LayoutOptions(TestCase):
 
         header_line = str(self.tbl).splitlines()[1]
         data_line = str(self.tbl).splitlines()[4]
-        self.assertEqual('N/A',
-                         self.tbl.value_none_string,
-                         'default field name for None is N/A')
-        self.assertEqual('|  Name       |  N/A           |  Height(cm)  |  Weight(kg)  |',
+        self.assertEqual('|  Name       |  None          |  Height(cm)  |  Weight(kg)  |',
                          header_line,
                          'None value for a field name should become self.value_none_string')
-        self.assertEqual('|  Pikachu    |  N/A           |         N/A  |       6.100  |',
+        self.assertEqual('|  Pikachu    |  None          |        None  |       6.100  |',
                          data_line,
                          'None value in data should become self.value_none_string, aligned by column setting')
 
@@ -403,7 +400,7 @@ class LayoutOptions(TestCase):
         self.assertEqual(['BULBASAUR', 'PIKACHU', 'MEWTWO'],
                          list(value.strip() for value in data_cols[0][1:]),
                          'applying this function should result in uppercase values')
-        self.assertEqual(['grass/poison', 'N/A', 'psychic'],
+        self.assertEqual(['grass/poison', 'None', 'psychic'],
                          list(value.strip() for value in data_cols[1][1:]),
                          'applying this function should result in lowercase / None values')
 

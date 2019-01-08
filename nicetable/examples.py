@@ -23,7 +23,6 @@ print(out)
 out = NiceTable(['Setting', 'Type', 'Default', 'Description'], layout='md')
 for setting in NiceTable.FORMATTING_SETTINGS:
     out.append(setting)
-out.set_col_adjust('Default', 'strict_left')
 print(out)
 
 
