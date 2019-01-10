@@ -47,7 +47,9 @@ class NiceTable:
         ['value_none_string', 'str', 'None', 'string representation of the None value'],
         ['value_escape_type', 'str', 'ignore',
             f'handling of `sep_vertical` inside a value, one of: {VALUE_ESCAPING_OPTIONS}'],
-        ['value_escape_char', 'str', '\\', 'a string to replace or prefix `sep_vertical`, based on `value_escape_type`']
+        ['value_escape_char', 'str', '\\',
+            'a string to replace or prefix `sep_vertical`, based on `value_escape_type`'],
+        ['value_func', 'function', None, ' a function to pre-process the value before any other settings apply']
     ]
 
     # noinspection SpellCheckingInspection
@@ -84,7 +86,8 @@ class NiceTable:
                  value_newline_replace: Optional[str] = None,
                  value_none_string: Optional[str] = None,
                  value_escape_type: Optional[str] = None,
-                 value_escape_char: Optional[str] = None):
+                 value_escape_char: Optional[str] = None,
+                 value_func: Optional[Callable[[Any], Any]] = None):
         self._set_formatting_defaults()
         # setting a layout overrides some of the default layout options
         self.layout = coalesce(layout, 'default')
@@ -108,6 +111,7 @@ class NiceTable:
         self.value_none_string = coalesce(value_none_string, self.value_none_string)
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
+        self.value_func = coalesce(value_func, self.value_func)
         # initializing the rest of the instance variables to represent an empty table
         self.columns = []
         self.col_names = []
@@ -146,6 +150,7 @@ class NiceTable:
         self.value_none_string = get_default('value_none_string')
         self.value_escape_type = get_default('value_escape_type')
         self.value_escape_char = get_default('value_escape_char')
+        self.value_func = get_default('value_func')
 
     @property
     def header_adjust(self):
@@ -190,6 +195,16 @@ class NiceTable:
             raise ValueError(f'Unknown value escape type "{value_escape_type}", ' 
                              f'should be one of {self.VALUE_ESCAPING_OPTIONS}')
         self._value_escape_type = value_escape_type
+
+    @property
+    def value_func(self):
+        return self._value_func
+
+    @value_func.setter
+    def value_func(self, func: Optional[Callable[[Any], Any]]) -> None:
+        if func is not None and not hasattr(func, '__call__'):
+            raise TypeError(f"value_func should be a function, got '{func}' of type {type(func)}")
+        self._value_func = func
 
     @property
     def layout(self):
@@ -291,7 +306,15 @@ class NiceTable:
         self.col_digits_left = list(0 for _ in range(self.total_cols))
         self.col_digits_right = list(0 for _ in range(self.total_cols))
         for col_pos in range(self.total_cols):
-            col_is_numeric = all(isinstance(value, numbers.Number) or value is None for value in self.columns[col_pos])
+            # Check if all values in the column are numeric / None, after applying column function, if any
+            func = self.col_funcs[col_pos] or self.value_func
+            col_is_numeric = True
+            for value in self.columns[col_pos]:
+                processed_value = value if func is None else func(value)
+                if not isinstance(processed_value, numbers.Number) and processed_value is not None:
+                    col_is_numeric = False
+                    break
+
             if col_is_numeric:
                 self.col_is_numeric[col_pos] = True
                 len_pairs_list = list(get_left_right_digits(value) for value in self.columns[col_pos])
@@ -313,16 +336,17 @@ class NiceTable:
         """ computes the separator of elements for a separator line, for example '--+--' """
         return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
-    def _value_to_str_list(self, value: Any, pos: int, compact_number: bool, is_header: bool) -> List[str]:
+    def _value_to_str_list(self, value: Any, pos: int, compact_number_required: bool, is_header: bool) -> List[str]:
         """Convert value to a list of unadjusted strings"""
         # 1. Apply any column-level lambda, if any
-        processed_value = value if self.col_funcs[pos] is None or is_header else self.col_funcs[pos](value)
+        func = self.col_funcs[pos] or self.value_func
+        processed_value = value if func is None or is_header else func(value)
 
         # 2. Format the value as a single string, including:
         #       for numbers: auto adjust if asked - fixed number of fractional digits and left-padding with spaces
         #       for non-numbers: escaping the sep_vertical character by policy
         if isinstance(processed_value, numbers.Number):
-            if compact_number:
+            if compact_number_required:
                 single_line_str = str(processed_value)
             else:
                 value_length = self.col_digits_left[pos] + self.col_digits_right[pos] + 1
@@ -359,8 +383,8 @@ class NiceTable:
 
     def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
         """Get a string representation of a value (List[str] to support multi-line) and apply cell adjustment to it"""
-        compact_number = adjust.startswith('strict') or adjust == 'compact'
-        str_list = self._value_to_str_list(value, pos, compact_number, is_header)
+        compact_number_required = adjust.startswith('strict') or adjust == 'compact'
+        str_list = self._value_to_str_list(value, pos, compact_number_required, is_header)
 
         col_len = max(self.col_widths[pos], self.value_min_len)
         if adjust in ['right', 'strict_right'] or (adjust == 'auto' and self.col_is_numeric[pos]):
@@ -416,14 +440,14 @@ class NiceTable:
     def _generate_output_lines_elements(self, per_cell_list: List[List[str]]) -> List[str]:
         """ Get a list of columns, each a list of string values (lines) and generate proper output lines from it"""
         # 1. compute the number of output lines for this line, based on the longest multi-line cell
-        actual_lines = max(len(cell_element) for cell_element in per_cell_list)
+        output_lines = max(len(cell_element) for cell_element in per_cell_list)
         # 2. build the output lines for this line - not all cells will have the same number of lines!
         out = []
-        for actual_line in range(actual_lines):
+        for out_line_num in range(output_lines):
             line_elements = []
             for col in range(self.total_cols):
-                if actual_line < len(per_cell_list[col]):
-                    line_elements.append(per_cell_list[col][actual_line])
+                if out_line_num < len(per_cell_list[col]):
+                    line_elements.append(per_cell_list[col][out_line_num])
                 else:
                     line_elements.append(' ' * self.col_widths[col])
             out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
@@ -432,7 +456,7 @@ class NiceTable:
     def set_col_options(self,
                         col: Union[int, str],
                         adjust: Optional[str] = None,
-                        func: Optional[Callable[[Any], Any]] = None):
+                        func: Optional[Callable[[Any], Any]] = None):  # TODO add the rest of the options
         if isinstance(col, int):
             if col < 0 or col >= self.total_cols:
                 raise IndexError("NiceTable.set_col_options(): " +
@@ -458,7 +482,6 @@ class NiceTable:
                             f"func parameter should be a function, got {type(func)}")
         else:
             self.col_funcs[col_pos] = func
-
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):

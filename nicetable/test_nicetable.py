@@ -2,7 +2,7 @@ from unittest import TestCase
 from nicetable.nicetable import NiceTable
 from typing import List
 import json
-
+import numbers
 
 class LayoutOptions(TestCase):
     """ Tests the effects of setting different layout options"""
@@ -339,6 +339,25 @@ class LayoutOptions(TestCase):
                          data_line,
                          'set sepline character to *')
 
+    def test__value_func__exception(self):
+        with self.assertRaises(TypeError) as context:
+            self.tbl.value_func = 'not a function'
+        self.assertEqual("value_func should be a function, got 'not a function' of type <class 'str'>",
+                         str(context.exception),
+                         'value_func should be a function')
+
+    def test__value_func(self):
+        self.tbl.value_func = lambda x: 5 if isinstance(x, numbers.Number) else x.swapcase()
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  pIKACHU    |  eLECTRIC      |           5  |       5.000  |',
+                         data_line,
+                         'applies a lambda to all columns')
+        self.tbl.value_func = None
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  Pikachu    |  Electric      |          40  |       6.100  |',
+                         data_line,
+                         "resetting value_func to make the output normal again")
+
     def test__set_col_options__exceptions(self):
         with self.assertRaises(IndexError) as context:
             self.tbl.set_col_options('my col', adjust='center')
@@ -372,6 +391,12 @@ class LayoutOptions(TestCase):
                          data_line,
                          'Left-adjusted forth column')
 
+        self.tbl.cell_adjust = 'right'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|    Pikachu  |      Electric  |          40  |    6.100     |',
+                         data_line,
+                         'now, all columns should be right adjusted except the forth, due to its column-level settings')
+
     def test__set_col_options__func(self):
         with self.assertRaises(TypeError) as context:
             self.tbl.set_col_options(0, func='not a function')
@@ -390,6 +415,12 @@ class LayoutOptions(TestCase):
         self.assertEqual(['grass/poison', 'None', 'psychic'],
                          list(value.strip() for value in data_cols[1][1:]),
                          'applying this function should result in lowercase / None values')
+
+        self.tbl.value_func = lambda x: 'aaa'
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  PIKACHU    |  None          |  aaa         |  aaa         |',
+                         data_line,
+                         'value_func should only apply to columns without column function')
 
     def test__get_column(self):
         self.assertEqual([6.901, 6.1, 122],
