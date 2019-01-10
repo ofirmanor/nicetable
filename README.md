@@ -187,27 +187,28 @@ value_escape_char
 Below is the list of the table-level settings, which you can directly set. 
 For example: `out.header = False`   
 
-|  Setting                |  Type  |  Default  |  Description                                                                                                                   |
-|-------------------------|--------|-----------|--------------------------------------------------------------------------------------------------------------------------------|
-|  header                 |  bool  |  True     |  whether the table header will be printed                                                                                      |
-|  header_sepline         |  bool  |  True     |  if the header is printed, whether a sepline will be printed after it                                                          |
-|  header_adjust          |  str   |  left     |  adjust of the column names, one of: ['left', 'center', 'right', 'compact']                                                    |
-|  sep_vertical           |  str   |  \|       |  a vertical separator string                                                                                                   |
-|  sep_horizontal         |  str   |  -        |  a horizontal separator string                                                                                                 |
-|  sep_cross              |  str   |  +        |  a crossing separator string (where vertical and horizontal separators meet)                                                   |
-|  border_top             |  bool  |  True     |  whether the table top border will be printed                                                                                  |
-|  border_bottom          |  bool  |  True     |  whether the table bottom border will be printed                                                                               |
-|  border_left            |  bool  |  True     |  whether the table left border will be printed                                                                                 |
-|  border_right           |  bool  |  True     |  whether the table right border will be printed                                                                                |
-|  cell_adjust            |  str   |  auto     |  adjust of the values, one of: ['auto', 'left', 'center', 'right', 'compact', 'strict_left', 'strict_center', 'strict_right']  |
-|  cell_spacing           |  int   |  2        |  number of spaces to add to each side of a value                                                                               |
-|  value_min_len          |  int   |  1        |  minimal string length of a value. Shorter values will be space-padded                                                         |
-|  value_max_len          |  int   |  9999     |  maximum string length of a value                                                                                              |
-|  value_too_long_policy  |  str   |  wrap     |  handling of a string longer than `value_max_len`, one of: ['truncate', 'wrap']                                                |
-|  value_newline_replace  |  str   |  None     |  if set, replace newlines in string value with this                                                                            |
-|  value_none_string      |  str   |  None     |  string representation of the None value                                                                                       |
-|  value_escape_type      |  str   |  ignore   |  handling of `sep_vertical` inside a value, one of:  ['remove', 'replace', 'prefix', 'ignore']                                 |
-|  value_escape_char      |  str   |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                    |
+|  Setting                |  Type      |  Default  |  Description                                                                                                                   |
+|-------------------------|------------|-----------|--------------------------------------------------------------------------------------------------------------------------------|
+|  header                 |  bool      |  1        |  whether the table header will be printed                                                                                      |
+|  header_sepline         |  bool      |  1        |  if the header is printed, whether a sepline will be printed after it                                                          |
+|  header_adjust          |  str       |  left     |  adjust of the column names, one of: ['left', 'center', 'right', 'compact']                                                    |
+|  sep_vertical           |  str       |  \|       |  a vertical separator string                                                                                                   |
+|  sep_horizontal         |  str       |  -        |  a horizontal separator string                                                                                                 |
+|  sep_cross              |  str       |  +        |  a crossing separator string (where vertical and horizontal separators meet)                                                   |
+|  border_top             |  bool      |  1        |  whether the table top border will be printed                                                                                  |
+|  border_bottom          |  bool      |  1        |  whether the table bottom border will be printed                                                                               |
+|  border_left            |  bool      |  1        |  whether the table left border will be printed                                                                                 |
+|  border_right           |  bool      |  1        |  whether the table right border will be printed                                                                                |
+|  cell_adjust            |  str       |  auto     |  adjust of the values, one of: ['auto', 'left', 'center', 'right', 'compact', 'strict_left', 'strict_center', 'strict_right']  |
+|  cell_spacing           |  int       |  2        |  number of spaces to add to each side of a value                                                                               |
+|  value_min_len          |  int       |  1        |  minimal string length of a value. Shorter values will be space-padded                                                         |
+|  value_max_len          |  int       |  9999     |  maximum string length of a value                                                                                              |
+|  value_too_long_policy  |  str       |  wrap     |  handling of a string longer than `value_max_len`, one of: ['truncate', 'wrap']                                                |
+|  value_newline_replace  |  str       |  None     |  if set, replace newlines in string value with this                                                                            |
+|  value_none_string      |  str       |  None     |  string representation of the None value                                                                                       |
+|  value_escape_type      |  str       |  ignore   |  handling of `sep_vertical` inside a value, one of: ['remove', 'replace', 'prefix', 'ignore']                                  |
+|  value_escape_char      |  str       |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                    |
+|  value_func             |  function  |  None     |   a function to pre-process the value before any other settings apply                                                          |
 
 *The table above was generated by iterating on `NiceTable.FORMATTING_SETTINGS` and using the `md` layout:*
 ````python
@@ -220,40 +221,39 @@ print(out)
 ````
 
 ## Column-level settings
-There are some column-level settings that you can control.  
-For each, you can specify the affected column by the column name or by the column position.  
-
-**set_col_adjust(col, adjust)**  
-sets an adjustment for a column. Overrides the table-level `cell_adjust` property.  
-`out.set_col_adjust('Type','center')`   *# set a by column name*  
-`out.set_col_adjust(1,'center')`   *# set by position*  
-
-**set_col_func(col,function)**  
-attach a pre-processing function to a column. The function will be applied to the value before it is being formatted.
+Column-level options include any table setting that starts with `cell_*` and `value_*`.  
+There are two ways to set column-level options.  
+**1. Set multiple options for a single column**
+Call `set_col_options()` to set any `cell`, `value` or `column` options.
+Pass either a column name or a column position for the first parameter. For example:
 ````python
 import json
 from nicetable.nicetable import NiceTable
 
-out = NiceTable(['Name', 'Type', 'Height(cm)', ' Weight(kg)'], layout='default')
+out = NiceTable(['Name', 'Type', 'Height(cm)', ' Weight(kg)'])
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
-out.set_col_func(0, lambda x: x.upper())
-out.set_col_func('Type', lambda x: x.lower() if x != 'Electric' else None)
+
+# set column options by position
+out.set_col_options(0,adjust='center')
+# set column options by column name
+out.set_col_options('Type',value_max_len=15, 
+                           value_none_string = 'N/A', 
+                           func=lambda x: x.lower() if x != 'Electric' else None)
 print(out)
 ````
+Output: # TODO
+````
+````
+**2. Set a single option for all columns**
+Directly replace the `List` of an option with a new list. For example:
+```python
+
+```
 Output:
 ````
-+-------------+----------------+--------------+---------------+
-|  Name       |  Type          |  Height(cm)  |   Weight(kg)  |
-+-------------+----------------+--------------+---------------+
-|  BULBASAUR  |  grass/poison  |          70  |        6.901  |
-|  PIKACHU    |  N/A           |          40  |        6.100  |
-|  MEWTWO     |  psychic       |         200  |      122.000  |
-+-------------+----------------+--------------+---------------+
-````
-The first column was changed to uppercase, the second to lowercase except one value that was assigned `None`,
-and therefore converted to `value_none_string`.
 
+````
 
 ## Others
 **get_column(col)**  
