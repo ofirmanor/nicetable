@@ -113,17 +113,13 @@ class NiceTable:
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
         self.value_func = coalesce(value_func, self.value_func)
         # initializing the rest of the instance variables to represent an empty table
-        self.columns = []
-        self.col_names = []
-        self.col_adjust = []
-        self.col_funcs: List[Optional[Callable[[Any], Any]]] = []
-        for name in columns_name:
-            self.columns.append([])
-            self.col_names.append(self.value_none_string if name is None else name)
-            self.col_adjust.append(None)
-            self.col_funcs.append(None)
         self.total_lines = 0
-        self.total_cols = len(self.col_names)
+        self.total_cols = len(columns_name)
+        self.columns: List[List[Any]] = list([] for _ in range(self.total_cols))
+        self.col_names = list(self.value_none_string if name is None else name for name in columns_name)
+        self.col_adjust = list(None for _ in range(self.total_cols))
+        self.col_max_len = list(None for _ in range(self.total_cols))
+        self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
 
     def _set_formatting_defaults(self):
         """ creates all instance variables and and initializes them to a default """
@@ -372,13 +368,14 @@ class NiceTable:
 
         # 4. Handle long output lines based on the table policy
         final_str_list = []
+        max_len = self.col_max_len[pos] or self.value_max_len
         for s in str_list:
-            if len(s) <= self.value_max_len:
+            if len(s) <= max_len:
                 final_str_list.append(s)
             elif self.value_too_long_policy == 'truncate':
-                final_str_list.append(s[:self.value_max_len])
+                final_str_list.append(s[:max_len])
             else:  # wrap long value
-                final_str_list += [s[i:i+self.value_max_len] for i in range(0, len(s), self.value_max_len)]
+                final_str_list += [s[i:i+max_len] for i in range(0, len(s), max_len)]
         return final_str_list
 
     def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
@@ -456,7 +453,13 @@ class NiceTable:
     def set_col_options(self,
                         col: Union[int, str],
                         adjust: Optional[str] = None,
+                        max_len: Optional[int] = None,
                         func: Optional[Callable[[Any], Any]] = None):  # TODO add the rest of the options
+        """
+|  value_newline_replace  |  str       |  None     |  if set, replace newlines in string value with this                                                                            |
+|  value_none_string      |  str       |  None     |  string representation of the None value                                                                                       |
+        """
+
         if isinstance(col, int):
             if col < 0 or col >= self.total_cols:
                 raise IndexError("NiceTable.set_col_options(): " +
@@ -471,17 +474,17 @@ class NiceTable:
             raise TypeError('NiceTable.set_col_options(): '
                             f'first parameter should be str or int (column name or position), got {type(col)}')
 
-        if adjust is not None:
-            if adjust not in self.COLUMN_ADJUST_OPTIONS:
-                raise ValueError('NiceTable.set_col_options(): '
-                                 f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
-            self.col_adjust[col_pos] = adjust
+        if adjust is not None and adjust not in self.COLUMN_ADJUST_OPTIONS:
+            raise ValueError('NiceTable.set_col_options(): '
+                             f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
+        self.col_adjust[col_pos] = adjust
+
+        self.col_max_len[col_pos] = max_len
 
         if func is not None and not hasattr(func, '__call__'):
             raise TypeError("NiceTable.set_col_options(): " +
                             f"func parameter should be a function, got {type(func)}")
-        else:
-            self.col_funcs[col_pos] = func
+        self.col_funcs[col_pos] = func
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):

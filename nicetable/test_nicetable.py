@@ -397,6 +397,14 @@ class LayoutOptions(TestCase):
                          data_line,
                          'now, all columns should be right adjusted except the forth, due to its column-level settings')
 
+    def test__set_col_options__max_len(self):
+        self.tbl.value_max_len = 7
+        self.tbl.set_col_options('Type', max_len=9)
+        data_line = str(self.tbl).splitlines()[4]
+        self.assertEqual('|  Bulbasa  |  Grass/Poi  |       70  |    6.901  |',
+                         data_line,
+                         'override the max column length for the second column')
+
     def test__set_col_options__func(self):
         with self.assertRaises(TypeError) as context:
             self.tbl.set_col_options(0, func='not a function')
