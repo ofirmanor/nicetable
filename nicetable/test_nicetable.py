@@ -349,6 +349,7 @@ class LayoutOptions(TestCase):
     def test__value_func(self):
         self.tbl.value_func = lambda x: 5 if isinstance(x, numbers.Number) else x.swapcase()
         data_line = str(self.tbl).splitlines()[4]
+        # noinspection SpellCheckingInspection
         self.assertEqual('|  pIKACHU    |  eLECTRIC      |           5  |       5.000  |',
                          data_line,
                          'applies a lambda to all columns')
@@ -397,6 +398,7 @@ class LayoutOptions(TestCase):
                          data_line,
                          'now, all columns should be right adjusted except the forth, due to its column-level settings')
 
+    # noinspection SpellCheckingInspection
     def test__set_col_options__max_len(self):
         self.tbl.value_max_len = 7
         self.tbl.set_col_options('Type', max_len=9)
@@ -404,6 +406,30 @@ class LayoutOptions(TestCase):
         self.assertEqual('|  Bulbasa  |  Grass/Poi  |       70  |    6.901  |',
                          data_line,
                          'override the max column length for the second column')
+
+    def test__set_col_options__newline_replace(self):
+        self.tbl.columns[1][0] = 'Grass\nPoison'
+        self.tbl.value_newline_replace = ' and '
+        self.tbl.set_col_options('Type', newline_replace=' or ')
+        data_line = str(self.tbl).splitlines()[3]
+        self.assertEqual('|  Bulbasaur  |  Grass or Poison  |          70  |       6.901  |',
+                         data_line,
+                         ' newline replace for second column should be from column-level setting')
+
+    def test__set_col_options__none_string(self):
+        self.tbl.col_names[1] = None
+        self.tbl.columns[1][1] = None
+        self.tbl.columns[2][1] = None
+        self.tbl.set_col_options(1, none_string='<oops>')
+        header_line = str(self.tbl).splitlines()[1]
+        data_line = str(self.tbl).splitlines()[4]
+
+        self.assertEqual('|  Name       |  <oops>        |  Height(cm)  |  Weight(kg)  |',
+                         header_line,
+                         'column-level none string in header')
+        self.assertEqual('|  Pikachu    |  <oops>        |        None  |       6.100  |',
+                         data_line,
+                         'column-level none string for column affects only second column, not third one')
 
     def test__set_col_options__func(self):
         with self.assertRaises(TypeError) as context:

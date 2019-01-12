@@ -119,6 +119,8 @@ class NiceTable:
         self.col_names = list(self.value_none_string if name is None else name for name in columns_name)
         self.col_adjust = list(None for _ in range(self.total_cols))
         self.col_max_len = list(None for _ in range(self.total_cols))
+        self.col_newline_replace = list(None for _ in range(self.total_cols))
+        self.col_none_string = list(None for _ in range(self.total_cols))
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
 
     def _set_formatting_defaults(self):
@@ -289,12 +291,12 @@ class NiceTable:
         def get_left_right_digits(n: numbers.Number) -> Tuple[int, int]:
             if n is None:
                 return 0, 0
-            value = str(n)
-            dot_pos = value.find('.')
+            as_string = str(n)
+            dot_pos = as_string.find('.')
             if dot_pos == -1:
-                return len(value), 0
+                return len(as_string), 0
             else:
-                return len(value[:dot_pos]), len(value[dot_pos + 1:])
+                return len(as_string[:dot_pos]), len(as_string[dot_pos + 1:])
 
         # setting initial mutable values for the calls to _value_as_str_list()
         self.col_widths = list(self.value_min_len for _ in range(self.total_cols))
@@ -349,7 +351,7 @@ class NiceTable:
                 single_line_str = f'{processed_value:.{self.col_digits_right[pos]}f}'.rjust(value_length)
         else:
             if processed_value is None:
-                single_line_str = self.value_none_string
+                single_line_str = self.col_none_string[pos] or self.value_none_string
             elif self.value_escape_type == 'remove':
                 single_line_str = str(processed_value).replace(self.sep_vertical, '')
             elif self.value_escape_type == 'replace':
@@ -361,10 +363,11 @@ class NiceTable:
                 single_line_str = str(processed_value)
 
         # 3. Handle newlines in the string
-        if self.value_newline_replace is None:
+        newline_replace = self.col_newline_replace[pos] or self.value_newline_replace
+        if newline_replace is None:
             str_list = single_line_str.split('\n')
         else:
-            str_list = [single_line_str.replace('\n', self.value_newline_replace)]
+            str_list = [single_line_str.replace('\n', newline_replace)]
 
         # 4. Handle long output lines based on the table policy
         final_str_list = []
@@ -454,11 +457,9 @@ class NiceTable:
                         col: Union[int, str],
                         adjust: Optional[str] = None,
                         max_len: Optional[int] = None,
-                        func: Optional[Callable[[Any], Any]] = None):  # TODO add the rest of the options
-        """
-|  value_newline_replace  |  str       |  None     |  if set, replace newlines in string value with this                                                                            |
-|  value_none_string      |  str       |  None     |  string representation of the None value                                                                                       |
-        """
+                        newline_replace: Optional[str] = None,
+                        none_string: Optional[str] = None,
+                        func: Optional[Callable[[Any], Any]] = None):
 
         if isinstance(col, int):
             if col < 0 or col >= self.total_cols:
@@ -474,17 +475,26 @@ class NiceTable:
             raise TypeError('NiceTable.set_col_options(): '
                             f'first parameter should be str or int (column name or position), got {type(col)}')
 
-        if adjust is not None and adjust not in self.COLUMN_ADJUST_OPTIONS:
-            raise ValueError('NiceTable.set_col_options(): '
-                             f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
-        self.col_adjust[col_pos] = adjust
+        if adjust is not None:
+            if adjust not in self.COLUMN_ADJUST_OPTIONS:
+                raise ValueError('NiceTable.set_col_options(): '
+                                 f'got adjust value "{adjust}", expecting one of {self.COLUMN_ADJUST_OPTIONS}')
+            self.col_adjust[col_pos] = adjust
 
-        self.col_max_len[col_pos] = max_len
+        if max_len is not None:
+            self.col_max_len[col_pos] = max_len
 
-        if func is not None and not hasattr(func, '__call__'):
-            raise TypeError("NiceTable.set_col_options(): " +
-                            f"func parameter should be a function, got {type(func)}")
-        self.col_funcs[col_pos] = func
+        if newline_replace is not None:
+            self.col_newline_replace[col_pos] = newline_replace
+
+        if none_string is not None:
+            self.col_none_string[col_pos] = none_string
+
+        if func is not None:
+            if not hasattr(func, '__call__'):
+                raise TypeError("NiceTable.set_col_options(): " +
+                                f"func parameter should be a function, got {type(func)}")
+            self.col_funcs[col_pos] = func
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):
