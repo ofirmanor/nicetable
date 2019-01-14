@@ -257,7 +257,7 @@ class NiceTable:
         self.value_escape_char = '\\'
         self.value_min_len = 3
 
-    def append(self, values: List[Any]) -> None:
+    def append(self, values: List[Any]) -> 'NiceTable':
         """Append a new line from list."""
         if not isinstance(values, list):  # TODO support also a dict (extract keys matching field names)
             raise TypeError(f'NiceTable.append() expecting a list, got {type(values)}')
@@ -271,6 +271,7 @@ class NiceTable:
                 self.columns[i].append(None)
             else:
                 self.columns[i].append(values[i])
+        return self
 
     def __str__(self):
         out = []
@@ -304,7 +305,12 @@ class NiceTable:
         self.col_digits_left = list(0 for _ in range(self.total_cols))
         self.col_digits_right = list(0 for _ in range(self.total_cols))
         for col_pos in range(self.total_cols):
-            # Check if all values in the column are numeric / None, after applying column function, if any
+            col_header_len = max(len(col_name_line) for col_name_line in self._col_name_as_str_list(col_pos))
+            if self.total_lines == 0:
+                self.col_widths[col_pos] = col_header_len
+                break
+
+            # Check whether all values in the column are numeric / None, after applying column function, if any
             func = self.col_funcs[col_pos] or self.value_func
             col_is_numeric = True
             for value in self.columns[col_pos]:
@@ -319,12 +325,11 @@ class NiceTable:
                 self.col_digits_left[col_pos] = max(pair[0] for pair in len_pairs_list)
                 self.col_digits_right[col_pos] = max(pair[1] for pair in len_pairs_list)
 
-            header_len = max(len(col_name_line) for col_name_line in self._col_name_as_str_list(col_pos))
             # getting max data length of the column - each cell can be multi-line
             all_cells_str_lists = (self._value_as_str_list(col_pos, value) for value in self.columns[col_pos])
             all_col_str = (s for single_cell_list in all_cells_str_lists for s in single_cell_list)
-            max_data_len = max(len(s) for s in all_col_str)
-            self.col_widths[col_pos] = max(header_len, max_data_len)
+            col_max_data_len = max(len(s) for s in all_col_str)
+            self.col_widths[col_pos] = max(col_header_len, col_max_data_len)
 
     def _get_value_sep(self) -> str:
         """ computes the separator string between cells, for example '  |  ' """
@@ -459,7 +464,7 @@ class NiceTable:
                         max_len: Optional[int] = None,
                         newline_replace: Optional[str] = None,
                         none_string: Optional[str] = None,
-                        func: Optional[Callable[[Any], Any]] = None):
+                        func: Optional[Callable[[Any], Any]] = None) -> 'NiceTable':
 
         if isinstance(col, int):
             if col < 0 or col >= self.total_cols:
@@ -495,6 +500,8 @@ class NiceTable:
                 raise TypeError("NiceTable.set_col_options(): " +
                                 f"func parameter should be a function, got {type(func)}")
             self.col_funcs[col_pos] = func
+
+        return self
 
     def get_column(self, col: Union[int, str]) -> List[Any]:
         if isinstance(col, str):

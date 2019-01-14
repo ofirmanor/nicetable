@@ -4,6 +4,7 @@ from typing import List
 import json
 import numbers
 
+
 class LayoutOptions(TestCase):
     """ Tests the effects of setting different layout options"""
 
@@ -12,7 +13,6 @@ class LayoutOptions(TestCase):
         self.tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
         for pokemon in json.loads(NiceTable.SAMPLE_JSON):
             self.tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
-        self.tbl_as_lines = str(self.tbl).splitlines()
 
     def default_to_lines_cols(self) -> List[List[str]]:
         """Capture the test table as a string and return it as a list (by line) of list of string values."""
@@ -32,7 +32,7 @@ class LayoutOptions(TestCase):
                         'Specifying an unknown layout should raise with clear error')
 
     def test__header(self):
-        lines_before = self.tbl_as_lines
+        lines_before = str(self.tbl).splitlines()
         self.tbl.header = False
         lines_after = str(self.tbl).splitlines()
         self.assertEqual(lines_before[2:],
@@ -40,7 +40,7 @@ class LayoutOptions(TestCase):
                          'Removing the header should remove two lines')
 
     def test__header_sepline(self):
-        lines_before = self.tbl_as_lines
+        lines_before = str(self.tbl).splitlines()
         self.tbl.header_sepline = False
         lines_after = str(self.tbl).splitlines()
         del lines_before[2]
@@ -83,7 +83,7 @@ class LayoutOptions(TestCase):
                          'Left-adjusted header')
 
     def test__borders(self):
-        lines_before = self.tbl_as_lines
+        lines_before = str(self.tbl).splitlines()
         self.tbl.border_top = False
         lines_after = str(self.tbl).splitlines()
         del lines_before[0]
@@ -456,13 +456,52 @@ class LayoutOptions(TestCase):
                          data_line,
                          'value_func should only apply to columns without column function')
 
+
+class Layouts(TestCase):
+    def setUp(self):
+        # all layout tests use the same data
+        self.simple_tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
+        self.complex_tbl = NiceTable(['Name', None, 'Height\n(cm)', 'Weight\n(kg)'])
+        for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+            self.simple_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
+            self.complex_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
+        self.complex_tbl.columns[1][1] = None
+        self.complex_tbl.columns[2][1] = None
+        self.complex_tbl.columns[1][0] = 'Grass\nPoison'
+        # print('simple\n' + str(self.simple_tbl))
+        # print('complex\n' + str(self.complex_tbl))
+
     def test__get_column(self):
         self.assertEqual([6.901, 6.1, 122],
-                         self.tbl.get_column(3),
+                         self.simple_tbl.get_column(3),
                          'getting a column as a list of values')
         self.assertEqual([6.901, 6.1, 122],
-                         self.tbl.get_column('Weight(kg)'),
+                         self.simple_tbl.get_column('Weight(kg)'),
                          'getting a column as a list of values')
+
+
+class DataManipulations(TestCase):
+    def test__empty_table(self):
+        t = NiceTable(['a', 'b'])
+        expected_table = \
+            '+-----+-----+\n' + \
+            '|  a  |  b  |\n' + \
+            '+-----+-----+\n' + \
+            '+-----+-----+\n'
+        self.assertEqual(expected_table,
+                         str(t),
+                         'empty table printed nicely')
+
+    def test__dot_annotation(self):
+        expected_table = \
+            '+------+--------+\n' + \
+            '|  a   |  bbb   |\n' + \
+            '+------+--------+\n' + \
+            '|   1  |  None  |\n' + \
+            '+------+--------+\n'
+        self.assertEqual(expected_table,
+                         str(NiceTable(['a', 'bbb']).append([1, None]).set_col_options(0, none_string='xXx')),
+                         'calling .append(...).set_col_options(...) using dot annotation should work')
 
 
 if __name__ == '__main__':
