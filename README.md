@@ -2,10 +2,9 @@
 * A clean and elegant way to print text tables in Python with minimal boilerplate code.
 * Built with modern Python (including type annotations) and has an extensive test suite. Requires Python 3.6 and up.
 
-## Basics
-Typical usage includes:
+## Typical usage
 1. Import:  
-`from nicetable import NiceTable`
+`from nicetable.nicetable import NiceTable`
 
 2. Create a `NiceTable`, providing a `List`of column names.  
 You can optionally pick a table layout, or override any formatting option:  
@@ -152,9 +151,9 @@ Output:
 When newlines are encountered in a column name or a value, they by default cause the text to wrap.  Alternatively, you can ask that newlines will be replaced, by setting `value_newline_replace` to an alternative string (default is `None`).  
 The following example first shows the default behavior, and than shows replacing newlines with the string `\n`:
 ````python
-out = NiceTable(['Code', 'Product Description\n(Long)'])
-out.append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.'])
-out.append([2, 'Sack of sand'])
+out = NiceTable(['Code', 'Product Description\n(Long)']) \
+    .append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.']) \
+    .append([2, 'Sack of sand'])
 print(out)
 out.value_newline_replace = '\\n'
 print(out)
@@ -221,11 +220,17 @@ print(out)
 ````
 
 ## Column-level settings
-Column-level options include any table setting that starts with `cell_*` and `value_*`.  
-There are two ways to set column-level options.  
-**1. Set multiple options for a single column**
-Call `set_col_options()` to set any `cell`, `value` or `column` options.
-Pass either a column name or a column position for the first parameter. For example:
+The `set_col_options()` function sets allows you to set the following settings at the column-level:
+
+| Parameter       | Meaning                                        |
+| ----------------|------------------------------------------------|
+| adjust          | overrides the table-wide cell_adjust           |
+| max_len         | overrides the table-wide value_max_len         |
+| newline_replace | overrides the table-wide value_newline_replace |
+| none_string     | overrides the table-wide value_none_string     |
+| func            | overrides the table-wide value_func            |
+
+This function accepts either a column name or a column position for the first parameter. For example:  
 ````python
 import json
 from nicetable.nicetable import NiceTable
@@ -234,32 +239,30 @@ out = NiceTable(['Name', 'Type', 'Height(cm)', ' Weight(kg)'])
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
 
-# set column options by position
-out.set_col_options(0,adjust='center')
-# set column options by column name
-out.set_col_options('Type',value_max_len=15, 
-                           value_none_string = 'N/A', 
-                           func=lambda x: x.lower() if x != 'Electric' else None)
+# set the first column options by position
+out.set_col_options(0, adjust='center')
+
+# set the second column options by column name
+out.set_col_options('Type',
+                    func=lambda x: x.lower() if x != 'Electric' else None,
+                    none_string = 'N/A')
 print(out)
 ````
-Output: # TODO
-````
-````
-**2. Set a single option for all columns**
-Directly replace the `List` of an option with a new list. For example:
-```python
-
-```
 Output:
 ````
-
++-------------+----------------+--------------+---------------+
+|  Name       |  Type          |  Height(cm)  |   Weight(kg)  |
++-------------+----------------+--------------+---------------+
+|  Bulbasaur  |  grass/poison  |          70  |        6.901  |
+|   Pikachu   |  N/A           |          40  |        6.100  |
+|    Mewtwo   |  psychic       |         200  |      122.000  |
++-------------+----------------+--------------+---------------+
 ````
-
 ## Others
 **get_column(col)**  
 returns a `List` of the column values.  
 
-
+    
 ## Adding a custom layout
 To add a custom layout based on the existing options, you can inherit from `NiceTable` 
 and define your own layout function.  
