@@ -177,10 +177,17 @@ Output:
 |     2  |  Sack of sand                                            |
 +--------+----------------------------------------------------------+
 ````
-## Escaping
-TODO...  
-value_escape_type  
-value_escape_char
+#### Escaping
+The values in different columns of the same row are separated by the vertical separator string (default is `|`, set by the `sep_vertical` property).  
+What happens if the content of a cell contains that string? It might be irrelevant if the output is just viewed by a person, but it might matter if the string output will be processed by another program (for example, for the `CSV` layout).  
+There are four supported behaviors you can choose from, if the one set by the layout you picked is not appropriate:  
+1. **ignore**: no special handling of the vertical separator in a a cell, it is printed as is. 
+This is the default escaping behavior.
+2. **remove**: the vertical separator is removed.  
+This is set by the `csv` layout and its derivatives (`tsv` and `grep` layouts).
+3. **prefix**: the vertical separator is prefixed by another string, controlled by `value_escape_char`.  
+ This is set by the `md` layout, which uses `\` as a prefix.
+4. **replace**: the vertical separator is prefixed by another string, controlled by `value_escape_char`.
 
 ## Table-level settings
 Below is the list of the table-level settings, which you can directly set. 
@@ -245,7 +252,7 @@ out.set_col_options(0, adjust='center')
 # set the second column options by column name
 out.set_col_options('Type',
                     func=lambda x: x.lower() if x != 'Electric' else None,
-                    none_string = 'N/A')
+                    none_string='N/A')
 print(out)
 ````
 Output:
