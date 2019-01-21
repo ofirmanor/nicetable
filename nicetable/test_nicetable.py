@@ -458,6 +458,7 @@ class LayoutOptions(TestCase):
 
 
 class Layouts(TestCase):
+    # TODO add tests for each layout
     def setUp(self):
         # all layout tests use the same data
         self.simple_tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
@@ -503,7 +504,41 @@ class DataManipulations(TestCase):
                          str(NiceTable(['a', 'bbb']).append([1, None]).set_col_options(0, none_string='xXx')),
                          'calling .append(...).set_col_options(...) using dot annotation should work')
 
+    def test__append_dict(self):
+        out1 = NiceTable(['name', 'What is this', 'height', 'weight'])
+        out2 = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
+        for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+            out1.append(pokemon)
+            out2.append(pokemon)
+
+        expected_out = \
+            '+-------------+----------------+----------+-----------+\n' + \
+            '|  name       |  What is this  |  height  |  weight   |\n' + \
+            '+-------------+----------------+----------+-----------+\n' + \
+            '|  Bulbasaur  |          None  |      70  |    6.901  |\n' + \
+            '|  Pikachu    |          None  |      40  |    6.100  |\n' + \
+            '|  Mewtwo     |          None  |     200  |  122.000  |\n' + \
+            '+-------------+----------------+----------+-----------+\n'
+        self.assertEqual(expected_out,
+                         str(out1),
+                         'dict fields that matches column names should be appeneded, else None ')
+
+        expected_out = \
+            '+--------+--------+--------------+--------------+\n' \
+            '|  Name  |  Type  |  Height(cm)  |  Weight(kg)  |\n' \
+            '+--------+--------+--------------+--------------+\n' \
+            '|  None  |  None  |        None  |        None  |\n' \
+            '|  None  |  None  |        None  |        None  |\n' \
+            '|  None  |  None  |        None  |        None  |\n' \
+            '+--------+--------+--------------+--------------+\n'
+
+        self.assertEqual(expected_out,
+                         str(out2),
+                         'append with dict works even if no field is matching')
+
 
 if __name__ == '__main__':
     import unittest
     unittest.main()
+
+# TODO constructor should reject None / [] column names

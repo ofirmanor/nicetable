@@ -1,5 +1,5 @@
 import numbers
-from typing import List, Union, Optional, Callable, Any, Tuple
+from typing import List, Union, Optional, Callable, Any, Tuple, Dict
 
 
 def coalesce(*args: Any) -> Any:
@@ -16,15 +16,14 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO add function to set any column option. Add min/max len, newline, wrap etc to the column
-        TODO import table directly from dictionary / JSON
+        TODO pass a data structure to the constructor (list of list? list of dict?) "JSON"
         TODO integrate with SQL result set
-        TODO add unittests for each layout
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
-        TODO add / remove column (data);  hide / show column (print)
+        TODO column manipulations: add / remove column (data);  hide / show column (print); sort (print)
     FORMATTING
         TODO custom value quoting (wrapper) like ""
         TODO (idea) ASCII color for headers
+        TODO custom separator function for (md layout); use header marker for alignment (:--- :--: ---:)
     PACKAGING / PUBLISHING
         TODO docstring for __init__ or class
     """
@@ -257,7 +256,6 @@ class NiceTable:
     def _layout_as_md(self) -> None:
         """for tables inside Markdown(.md) files, using the GFM table extension. Ex: README.md on github."""
         # https://github.github.com/gfm/#tables-extension-
-        # TODO (md layout) left align the values, use header marker for alignment (:--- :--: ---:)
         self.border_top = False
         self.border_bottom = False
         self.sep_cross = '|'
@@ -265,21 +263,40 @@ class NiceTable:
         self.value_escape_char = '\\'
         self.value_min_len = 3
 
-    def append(self, values: List[Any]) -> 'NiceTable':
-        """Append a new line from list."""
-        if not isinstance(values, list):  # TODO support also a dict (extract keys matching field names)
-            raise TypeError(f'NiceTable.append() expecting a list, got {type(values)}')
+    def append(self, values: Union[List[Any], Dict[str, Any]]) -> 'NiceTable':
+        """Append a single line from list or a dict."""
+        if isinstance(values, dict):
+            append_func = self._append_dict
+        elif isinstance(values, list):
+            append_func = self._append_list
+        else:
+            raise TypeError(f'NiceTable.append() expecting a list or a dict, got {type(values)}')
+
+        self.total_lines += 1
+        append_func(values)
+        return self
+
+    def _append_list(self, values: List[Any]) -> None:
+        """Append a row, using None if not enough elements"""
         if len(values) > self.total_cols:
             raise ValueError(f'NiceTable.append() got a list of {len(values)} elements, ' +
                              'expecting up to {self.total_cols}')
 
-        self.total_lines += 1
-        for i in range(self.total_cols):  #
-            if i >= len(values):  # values[] is allowed to be shorter than self.total_cols
+        for i in range(self.total_cols):
+            if i >= len(values):
                 self.columns[i].append(None)
             else:
                 self.columns[i].append(values[i])
-        return self
+
+    def _append_dict(self, values: Dict[str, Any]) -> None:
+        """Append a row from a dict - match dict keys with column names (use None for columns not in the dict)"""
+        for i in range(self.total_cols):
+            col_name = self.col_names[i]
+            if  col_name in values:
+                self.columns[i].append(values[col_name])
+            else:
+                self.columns[i].append(None)
+
 
     def __str__(self):
         out = []
@@ -466,6 +483,7 @@ class NiceTable:
             out.append(self._wrap_line_with_borders(self._get_value_sep().join(line_elements)))
         return out
 
+    # noinspection PyTypeChecker
     def set_col_options(self,
                         col: Union[int, str],
                         adjust: Optional[str] = None,
