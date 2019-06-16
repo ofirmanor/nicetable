@@ -433,7 +433,7 @@ class LayoutOptions(TestCase):
 
     def test__set_col_options__func(self):
         with self.assertRaises(TypeError) as context:
-            self.tbl.set_col_options(0, sfunc='not a function')
+            self.tbl.set_col_options(0, func='not a function')
         self.assertEqual("NiceTable.set_col_options(): " +
                          "func parameter should be a function, got <class 'str'>",
                          str(context.exception),
