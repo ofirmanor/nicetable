@@ -16,7 +16,8 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO pass a data structure to the constructor (list of list? list of dict?) "JSON"
+        TODO constructor - support also list of dict (maybe rename the sample JSON?) - field naming?
+        TODO check integration with pandas df
         TODO integrate with SQL result set
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO column manipulations: add / remove column (data);  hide / show column (print); sort (print)
@@ -73,7 +74,8 @@ class NiceTable:
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
     def __init__(self,
-                 columns_name: List[str],
+                 col_names: List[str],
+                 rows: Optional[List[List[Any]]] = None,  # TODO extend it to accept also a list of dict
                  layout: Optional[str] = None,
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
@@ -121,14 +123,20 @@ class NiceTable:
         self.value_func = coalesce(value_func, self.value_func)
         # initializing the rest of the instance variables to represent an empty table
         self.total_lines = 0
-        self.total_cols = len(columns_name)
+        self.total_cols = len(col_names)
         self.columns: List[List[Any]] = list([] for _ in range(self.total_cols))
-        self.col_names = list(self.value_none_string if name is None else name for name in columns_name)
+        self.col_names = list(self.value_none_string if name is None else name for name in col_names)
         self.col_adjust = list(None for _ in range(self.total_cols))
         self.col_max_len = list(None for _ in range(self.total_cols))
         self.col_newline_replace = list(None for _ in range(self.total_cols))
         self.col_none_string = list(None for _ in range(self.total_cols))
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
+        # Populating with data
+        if rows:
+            if not isinstance(rows, list):
+                raise TypeError(f'NiceTable() rows parameter expecting a list, got {type(rows)}')
+            for r in rows:
+                self.append(r)
 
     def _set_formatting_defaults(self):
         """ creates all instance variables and and initializes them to a default """

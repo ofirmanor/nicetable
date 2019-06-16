@@ -536,6 +536,15 @@ class DataManipulations(TestCase):
                          str(out2),
                          'append with dict works even if no field is matching')
 
+    def test__constructor_with_rows__list_of_list(self):
+        out1 = NiceTable(['Layout', 'Description'], NiceTable.builtin_layouts())
+        out2 = NiceTable(['Layout', 'Description'])
+        for layout in NiceTable.builtin_layouts():
+            out2.append(layout)
+        self.assertEqual(str(out1),
+                         str(out2),
+                         'initializing NiceTable with a list of lists is the same as appending each list in a loop')
+
 
 if __name__ == '__main__':
     import unittest

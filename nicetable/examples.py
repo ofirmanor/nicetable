@@ -50,7 +50,7 @@ out.set_col_options(0, adjust='center')
 # set column options by column name
 out.set_col_options('Type',
                     func=lambda x: x.lower() if x != 'Electric' else None,
-                    none_string = 'N/A')
+                    none_string='N/A')
 
 # Example: different numeric alignments
 out = NiceTable(['standard left', 'standard center', 'standard right', 'strict_left', 'strict_center', 'strict_right'])
