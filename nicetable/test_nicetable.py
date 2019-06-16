@@ -493,21 +493,21 @@ class DataManipulations(TestCase):
                          str(t),
                          'empty table printed nicely')
 
-    def test__constructor_with_no_col_names_no_rows(self):
+    def test__constructor_with_no_col_names_no_data(self):
         with self.assertRaises(ValueError) as context:
             out = NiceTable()
         self.assertTrue(str(context.exception) ==
-                        'NiceTable(): to skip passing col_names, you need to provide the rows parameter instead',
-                        'correctly raises when both col_names and rows are missing')
+                        'NiceTable(): to skip passing col_names, you need to provide the data parameter instead',
+                        'correctly raises when both col_names and data are missing')
 
-    def test__constructor_with_bad_type_for_rows(self):
+    def test__constructor_with_bad_type_for_data(self):
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(rows='cat')
-        self.assertTrue(str(context.exception) ==  "NiceTable(): rows parameter expecting a list, got <class 'str'>",
-                        'correctly raises if rows is not a list')
+            out = NiceTable(data='cat')
+        self.assertTrue(str(context.exception) ==  "NiceTable(): data parameter expecting a list, got <class 'str'>",
+                        'correctly raises if data is not a list')
 
-    def test__constructor_with_only_rows_as_list_of_lists(self):
-        out1 = NiceTable(rows=NiceTable.FORMATTING_SETTINGS)
+    def test__constructor_with_only_data_as_list_of_lists(self):
+        out1 = NiceTable(data=NiceTable.FORMATTING_SETTINGS)
         out2 = NiceTable(['c001', 'c002', 'c003', 'c004'])
         for row in NiceTable.FORMATTING_SETTINGS:
             out2.append(row)
@@ -515,8 +515,8 @@ class DataManipulations(TestCase):
                          str(out2),
                          'passing a list of lists correctly auto-generates column names')
 
-    def test__constructor_with_only_rows_as_list_of_dicts(self):
-        out1 = NiceTable(rows=json.loads(NiceTable.SAMPLE_JSON))
+    def test__constructor_with_only_data_as_list_of_dicts(self):
+        out1 = NiceTable(data=json.loads(NiceTable.SAMPLE_JSON))
         out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
         for row in json.loads(NiceTable.SAMPLE_JSON):
             out2.append(row)

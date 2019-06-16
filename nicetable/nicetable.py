@@ -74,7 +74,7 @@ class NiceTable:
 
     def __init__(self,
                  col_names: Optional[List[str]] = None,
-                 rows: Optional[Union[List[List[Any]], List[Dict[str, Any]]]] = None,
+                 data: Optional[Union[List[List[Any]], List[Dict[str, Any]]]] = None,
                  layout: Optional[str] = None,
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
@@ -122,13 +122,13 @@ class NiceTable:
         self.value_func = coalesce(value_func, self.value_func)
 
         self.total_lines = 0
-        # auto-generating column names from rows if col_names is not provided
-        if not col_names and not rows:
-            raise ValueError('NiceTable(): to skip passing col_names, you need to provide the rows parameter instead')
-        if rows and not isinstance(rows, list):
-            raise TypeError(f'NiceTable(): rows parameter expecting a list, got {type(rows)}')
+        # auto-generating column names from data if col_names is not provided
+        if not col_names and not data:
+            raise ValueError('NiceTable(): to skip passing col_names, you need to provide the data parameter instead')
+        if data and not isinstance(data, list):
+            raise TypeError(f'NiceTable(): data parameter expecting a list, got {type(data)}')
         if not col_names:
-            # auto-generating col_names from rows, with a single pass on rows.
+            # auto-generating col_names from data, with a single pass on data.
             #   1. if each row is a list of values, generate names as c001, c002 etc
             #   2. if each row is a dict, generate a column to each unique key (using a set)
             #   in all other cases, refuse to generate names
@@ -136,7 +136,7 @@ class NiceTable:
             found_dict = False
             found_list = False
             list_max_cols = 0
-            for row in rows:
+            for row in data:
                 if isinstance(row, list):
                     found_list = True
                     list_max_cols = max (list_max_cols, len(row))
@@ -168,9 +168,9 @@ class NiceTable:
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
 
         # Populating with initial data if provided
-        if rows:
-           for r in rows:
-             self.append(r)
+        if data:
+           for row in data:
+             self.append(row)
 
 
     def _init_layout_instance_vars(self):
