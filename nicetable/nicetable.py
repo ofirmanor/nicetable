@@ -128,34 +128,35 @@ class NiceTable:
         if data and not isinstance(data, list):
             raise TypeError(f'NiceTable(): data parameter expecting a list, got {type(data)}')
         if not col_names:
-            # auto-generating col_names from data, with a single pass on data.
-            #   1. if each row is a list of values, generate names as c001, c002 etc
-            #   2. if each row is a dict, generate a column to each unique key (using a set)
-            #   in all other cases, refuse to generate names
+            # doing a single pass on data to generate col_names
+            #   1. if each item is a list of values, generate names as c001, c002 etc
+            #   2. if each item is a dict, generate a column to each unique key (using a set)
+            #   in all other cases, raise error
             col_names = []
             found_dict = False
             found_list = False
             list_max_cols = 0
-            for row in data:
-                if isinstance(row, list):
+            for item in data:
+                if isinstance(item, list):
                     found_list = True
-                    list_max_cols = max (list_max_cols, len(row))
-                elif isinstance(row,dict):
+                    list_max_cols = max (list_max_cols, len(item))
+                elif isinstance(item, dict):
                     found_dict = True
-                    for k in row.keys():
+                    for k in item.keys():
                         if k not in col_names:
                             col_names.append(k)
                 else:
-                    raise TypeError ('what')  // FIXME
+                    raise TypeError ('NiceTable(): when generating column names, data parameter should be a list of ' 
+                                     f'lists or a list of dicts, but got a list item of type {type(item)}')
+
+                if found_dict and found_list:
+                    raise TypeError('NiceTable(): data parameter expecting a list of lists or a list of dicts,'
+                                    ' got a list that includes both lists and dicts')
 
             if found_list and not found_dict:
                 col_names = [f'c{i+1:03}' for i in range(list_max_cols)]
-            if found_dict and not found_list:
+            elif found_dict and not found_list:
                 pass # col_names is already ready
-            if found_dict and found_list:
-                pass # FIXME RAISE
-            if not found_dict and not found_list:
-                pass # FIXME RAISE
 
         # init col-level instance vars
         self.total_cols = len(col_names)
