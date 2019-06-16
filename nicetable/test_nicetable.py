@@ -521,7 +521,7 @@ class DataManipulations(TestCase):
             '+-------------+----------------+----------+-----------+\n'
         self.assertEqual(expected_out,
                          str(out1),
-                         'dict fields that matches column names should be appeneded, else None ')
+                         'dict fields that matches column names should be appended, else None ')
 
         expected_out = \
             '+--------+--------+--------------+--------------+\n' \
@@ -545,6 +545,14 @@ class DataManipulations(TestCase):
                          str(out2),
                          'initializing NiceTable with a list of lists is the same as appending each list in a loop')
 
+    def test__constructor_with_rows__list_of_dict(self):
+        out1 = NiceTable(['id', 'name', 'type', 'height', 'weight'], json.loads(NiceTable.SAMPLE_JSON))
+        out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
+        for layout in json.loads(NiceTable.SAMPLE_JSON):
+            out2.append(layout)
+        self.assertEqual(str(out1),
+                         str(out2),
+                         'initializing NiceTable with a list of dicts is the same as appending each dict in a loop')
 
 if __name__ == '__main__':
     import unittest

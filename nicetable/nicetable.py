@@ -75,7 +75,7 @@ class NiceTable:
 
     def __init__(self,
                  col_names: List[str],
-                 rows: Optional[List[List[Any]]] = None,  # TODO extend it to accept also a list of dict
+                 rows: Optional[Union[List[List[Any]], List[Dict[str, Any]]]] = None,
                  layout: Optional[str] = None,
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
@@ -97,10 +97,10 @@ class NiceTable:
                  value_escape_type: Optional[str] = None,
                  value_escape_char: Optional[str] = None,
                  value_func: Optional[Callable[[Any], Any]] = None):
-        self._set_formatting_defaults()
-        # setting a layout overrides some of the default layout options
+        self._init_layout_instance_vars()
+        # setting a layout may override some of the default layout options
         self.layout = coalesce(layout, 'default')
-        # user can overrides any layout option
+        # user can explicitly override any layout option
         self.header = coalesce(header, self.header)
         self.header_sepline = coalesce(header_sepline, self.header_sepline)
         self.header_adjust = coalesce(header_adjust, self.header_adjust)
@@ -121,7 +121,7 @@ class NiceTable:
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
         self.value_func = coalesce(value_func, self.value_func)
-        # initializing the rest of the instance variables to represent an empty table
+        # initializing the rest of the instance vars to represent an empty table
         self.total_lines = 0
         self.total_cols = len(col_names)
         self.columns: List[List[Any]] = list([] for _ in range(self.total_cols))
@@ -131,14 +131,16 @@ class NiceTable:
         self.col_newline_replace = list(None for _ in range(self.total_cols))
         self.col_none_string = list(None for _ in range(self.total_cols))
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
-        # Populating with data
+        # Populating with data if provided
         if rows:
-            if not isinstance(rows, list):
+            if isinstance(rows, list) or isinstance(rows, dict):
+                for r in rows:
+                    self.append(r)
+            else:
                 raise TypeError(f'NiceTable() rows parameter expecting a list, got {type(rows)}')
-            for r in rows:
-                self.append(r)
 
-    def _set_formatting_defaults(self):
+
+    def _init_layout_instance_vars(self):
         """ creates all instance variables and and initializes them to a default """
         def get_default(var_name: str) -> str:
             """picking defaults from FORMATTING_SETTINGS so code and documentation are in-sync"""
@@ -194,8 +196,8 @@ class NiceTable:
     @value_too_long_policy.setter
     def value_too_long_policy(self, policy: str):
         if policy not in self.VALUE_TOO_LONG_POLICY:
-                raise ValueError(f'Unknown "value too long" policy "{policy}", '
-                                 f'should be one of {self.VALUE_TOO_LONG_POLICY}')
+            raise ValueError(f'Unknown "value too long" policy "{policy}", '
+                             f'should be one of {self.VALUE_TOO_LONG_POLICY}')
         self._value_too_long_policy = policy
 
     @property
@@ -300,11 +302,10 @@ class NiceTable:
         """Append a row from a dict - match dict keys with column names (use None for columns not in the dict)"""
         for i in range(self.total_cols):
             col_name = self.col_names[i]
-            if  col_name in values:
+            if col_name in values:
                 self.columns[i].append(values[col_name])
             else:
                 self.columns[i].append(None)
-
 
     def __str__(self):
         out = []
@@ -373,7 +374,7 @@ class NiceTable:
         return f'{self.sep_horizontal * self.cell_spacing}{self.sep_cross}{self.sep_horizontal * self.cell_spacing}'
 
     def _value_to_str_list(self, value: Any, pos: int, compact_number_required: bool, is_header: bool) -> List[str]:
-        """Convert value to a list of unadjusted strings"""
+        """Convert a single value to a list of unadjusted strings"""
         # 1. Apply any column-level lambda, if any
         func = self.col_funcs[pos] or self.value_func
         processed_value = value if func is None or is_header else func(value)
@@ -400,14 +401,14 @@ class NiceTable:
             else:  # 'ignore'
                 single_line_str = str(processed_value)
 
-        # 3. Handle newlines in the string
+        # 3. Handle newlines in single_line_Str - transform it to a list of one or more lines
         newline_replace = self.col_newline_replace[pos] or self.value_newline_replace
         if newline_replace is None:
             str_list = single_line_str.split('\n')
         else:
             str_list = [single_line_str.replace('\n', newline_replace)]
 
-        # 4. Handle long output lines based on the table policy
+        # 4. Handle long output lines based on the table policy (may split or truncate long lines)
         final_str_list = []
         max_len = self.col_max_len[pos] or self.value_max_len
         for s in str_list:
