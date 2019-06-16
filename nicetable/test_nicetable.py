@@ -433,7 +433,7 @@ class LayoutOptions(TestCase):
 
     def test__set_col_options__func(self):
         with self.assertRaises(TypeError) as context:
-            self.tbl.set_col_options(0, func='not a function')
+            self.tbl.set_col_options(0, sfunc='not a function')
         self.assertEqual("NiceTable.set_col_options(): " +
                          "func parameter should be a function, got <class 'str'>",
                          str(context.exception),
@@ -493,32 +493,32 @@ class DataManipulations(TestCase):
                          str(t),
                          'empty table printed nicely')
 
-    def test__constructor_with_no_col_names_no_data(self):
+    # noinspection PyUnusedLocal,PyTypeChecker
+    def test__constructor__bad_data_field(self):
         with self.assertRaises(ValueError) as context:
             out = NiceTable()
         self.assertTrue(str(context.exception) ==
                         'NiceTable(): to skip passing col_names, you need to provide the data parameter instead',
                         'correctly raises when both col_names and data are missing')
 
-    def test__constructor_with_bad_data_field(self):
         with self.assertRaises(TypeError) as context:
             out = NiceTable(data='cat')
-        self.assertTrue(str(context.exception) ==  "NiceTable(): data parameter expecting a list, got <class 'str'>",
+        self.assertTrue(str(context.exception) == "NiceTable(): data parameter expecting a list, got <class 'str'>",
                         'correctly raises if data is not a list')
 
         with self.assertRaises(TypeError) as context:
             out = NiceTable(data=['cat'])
         self.assertTrue(str(context.exception) == "NiceTable(): when generating column names, data parameter should be "
-                            "a list of lists or a list of dicts, but got a list item of type <class 'str'>",
+                            "a list of lists/tuples or a list of dicts, but got a list item of type <class 'str'>",
                         'correctly raises if data list has an element that is not a list or dict')
 
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(data=[[1,2,3], {'x':1, 'y':2}])
+            out = NiceTable(data=[[1, 2, 3], {'x': 1, 'y': 2}])
         self.assertTrue(str(context.exception) == 'NiceTable(): data parameter expecting a list of lists or'
                                                   ' a list of dicts, got a list that includes both lists and dicts',
                         'correctly raises if data list has both list elements and dict elements')
 
-    def test__constructor_with_only_data_as_list_of_lists(self):
+    def test__constructor__data_only__list_of_lists(self):
         out1 = NiceTable(data=NiceTable.FORMATTING_SETTINGS)
         out2 = NiceTable(['c001', 'c002', 'c003', 'c004'])
         for row in NiceTable.FORMATTING_SETTINGS:
@@ -527,7 +527,17 @@ class DataManipulations(TestCase):
                          str(out2),
                          'passing a list of lists correctly auto-generates column names')
 
-    def test__constructor_with_only_data_as_list_of_dicts(self):
+    def test__constructor__data_only__list_of_tuples(self):
+        tuples = [("apple", "banana", "cherry"), ("dog", "cat")]
+        out1 = NiceTable(data=tuples)
+        out2 = NiceTable(['c001', 'c002', 'c003'])
+        for row in tuples:
+            out2.append(row)
+        self.assertEqual(str(out1),
+                         str(out2),
+                         'passing a list of tuples correctly auto-generates column names')
+
+    def test__constructor__data_only__list_of_dicts(self):
         out1 = NiceTable(data=json.loads(NiceTable.SAMPLE_JSON))
         out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
         for row in json.loads(NiceTable.SAMPLE_JSON):
@@ -583,7 +593,7 @@ class DataManipulations(TestCase):
                          str(out2),
                          'append with dict works even if no field is matching')
 
-    def test__constructor_with_col_names_and_data__list_of_list(self):
+    def test__constructor__col_names_and_data__list_of_list(self):
         out1 = NiceTable(['Layout', 'Description'], NiceTable.builtin_layouts())
         out2 = NiceTable(['Layout', 'Description'])
         for layout in NiceTable.builtin_layouts():
@@ -592,7 +602,7 @@ class DataManipulations(TestCase):
                          str(out2),
                          'initializing NiceTable with a list of lists is the same as appending each list in a loop')
 
-    def test__constructor_with_col_names_and_data__list_of_dict(self):
+    def test__constructor__col_names_and_data__list_of_dict(self):
         out1 = NiceTable(['id', 'name', 'type', 'height', 'weight'], json.loads(NiceTable.SAMPLE_JSON))
         out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
         for layout in json.loads(NiceTable.SAMPLE_JSON):
@@ -601,19 +611,20 @@ class DataManipulations(TestCase):
                          str(out2),
                          'initializing NiceTable with a list of dicts is the same as appending each dict in a loop')
 
-    def test__constructor_with_col_names_and_data__mixed_list(self):
-        out = NiceTable(['a','b','x','y'], data=[[1, 2, 3], {'x': 1, 'z': 2}])
+    def test__constructor__col_names_and_data__mixed_list(self):
+        out = NiceTable(['a', 'b', 'x', 'y'], data=[[1, 2, 3], {'x': 1, 'z': 2}, ("apple", "banana", "cherry")])
         expected_out = \
-            '+--------+--------+------+--------+\n' \
-            '|  a     |  b     |  x   |  y     |\n' \
-            '+--------+--------+------+--------+\n' \
-            '|     1  |     2  |   3  |  None  |\n' \
-            '|  None  |  None  |   1  |  None  |\n' \
-            '+--------+--------+------+--------+\n'
-
+            '+---------+----------+----------+--------+\n' \
+            '|  a      |  b       |  x       |  y     |\n' \
+            '+---------+----------+----------+--------+\n' \
+            '|  1      |  2       |  3       |  None  |\n' \
+            '|  None   |  None    |  1       |  None  |\n' \
+            '|  apple  |  banana  |  cherry  |  None  |\n' \
+            '+---------+----------+----------+--------+\n'
         self.assertEqual(expected_out,
                          str(out),
-                         'initializing NiceTable with a mixed list of dicts and lists works')
+                         'initializing NiceTable with a mixed list of dicts/tuples/lists works')
+
 
 if __name__ == '__main__':
     import unittest

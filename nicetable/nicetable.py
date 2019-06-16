@@ -16,7 +16,7 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO check integration with pandas df
+        TODO check integration with pandas df (itertuples)
         TODO integrate with SQL result set
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO column manipulations: add / rename / remove column (data);  hide / show column (print); sort (print)
@@ -74,7 +74,7 @@ class NiceTable:
 
     def __init__(self,
                  col_names: Optional[List[str]] = None,
-                 data: Optional[Union[List[List[Any]], List[Dict[str, Any]]]] = None,
+                 data: Optional[Union[List[List[Any]], List[Dict[str, Any]], List[Tuple]]] = None,
                  layout: Optional[str] = None,
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
@@ -129,34 +129,34 @@ class NiceTable:
             raise TypeError(f'NiceTable(): data parameter expecting a list, got {type(data)}')
         if not col_names:
             # doing a single pass on data to generate col_names
-            #   1. if each item is a list of values, generate names as c001, c002 etc
+            #   1. if each item is a list or tuple of values, generate names as c001, c002 etc
             #   2. if each item is a dict, generate a column to each unique key (using a set)
             #   in all other cases, raise error
             col_names = []
-            found_dict = False
-            found_list = False
+            found_dict_or_tuple = False  # TODO dict or named tuple
+            found_list = False  # TODO list or tuple
             list_max_cols = 0
             for item in data:
-                if isinstance(item, list):
+                if isinstance(item, list) or isinstance(item, tuple):
                     found_list = True
-                    list_max_cols = max (list_max_cols, len(item))
+                    list_max_cols = max(list_max_cols, len(item))
                 elif isinstance(item, dict):
-                    found_dict = True
+                    found_dict_or_tuple = True
                     for k in item.keys():
                         if k not in col_names:
                             col_names.append(k)
                 else:
-                    raise TypeError ('NiceTable(): when generating column names, data parameter should be a list of ' 
-                                     f'lists or a list of dicts, but got a list item of type {type(item)}')
+                    raise TypeError('NiceTable(): when generating column names, data parameter should be a list of ' 
+                                    f'lists/tuples or a list of dicts, but got a list item of type {type(item)}')
 
-                if found_dict and found_list:
+                if found_dict_or_tuple and found_list:
                     raise TypeError('NiceTable(): data parameter expecting a list of lists or a list of dicts,'
                                     ' got a list that includes both lists and dicts')
 
-            if found_list and not found_dict:
+            if found_list and not found_dict_or_tuple:
                 col_names = [f'c{i+1:03}' for i in range(list_max_cols)]
-            elif found_dict and not found_list:
-                pass # col_names is already ready
+            elif found_dict_or_tuple and not found_list:
+                pass  # col_names is already ready
 
         # init col-level instance vars
         self.total_cols = len(col_names)
@@ -170,9 +170,8 @@ class NiceTable:
 
         # Populating with initial data if provided
         if data:
-           for row in data:
-             self.append(row)
-
+            for row in data:
+                self.append(row)
 
     def _init_layout_instance_vars(self):
         """ creates all instance variables and and initializes them to a default """
@@ -307,12 +306,12 @@ class NiceTable:
         self.value_escape_char = '\\'
         self.value_min_len = 3
 
-    def append(self, values: Union[List[Any], Dict[str, Any]]) -> 'NiceTable':
-        """Append a single line from list or a dict."""
+    def append(self, values: Union[List[Any], Dict[str, Any], Tuple]) -> 'NiceTable':
+        """Append a single line from list, a dict or a tuple."""
         if isinstance(values, dict):
             append_func = self._append_dict
-        elif isinstance(values, list):
-            append_func = self._append_list
+        elif isinstance(values, list) or isinstance(values, tuple):
+            append_func = self._append_unnamed_collection
         else:
             raise TypeError(f'NiceTable.append() expecting a list or a dict, got {type(values)}')
 
@@ -320,7 +319,7 @@ class NiceTable:
         append_func(values)
         return self
 
-    def _append_list(self, values: List[Any]) -> None:
+    def _append_unnamed_collection(self, values: Union[List[Any], Tuple]) -> None:
         """Append a row, using None if not enough elements"""
         if len(values) > self.total_cols:
             raise ValueError(f'NiceTable.append() got a list of {len(values)} elements, ' +
