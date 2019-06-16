@@ -122,43 +122,15 @@ class NiceTable:
         self.value_func = coalesce(value_func, self.value_func)
 
         self.total_lines = 0
-        # auto-generating column names from data if col_names is not provided
-        if not col_names and not data:
-            raise ValueError('NiceTable(): to skip passing col_names, you need to provide the data parameter instead')
+        if not data and not col_names:
+            raise ValueError('NiceTable(): the data parameter is mandatory if col_names are not provided')
         if data and not isinstance(data, list):
             raise TypeError(f'NiceTable(): data parameter expecting a list, got {type(data)}')
+
         if not col_names:
-            # doing a single pass on data to generate col_names
-            #   1. if each item is a list or tuple of values, generate names as c001, c002 etc
-            #   2. if each item is a dict, generate a column to each unique key (using a set)
-            #   in all other cases, raise error
-            col_names = []
-            found_dict_or_tuple = False  # TODO dict or named tuple
-            found_list = False  # TODO list or tuple
-            list_max_cols = 0
-            for item in data:
-                if isinstance(item, list) or isinstance(item, tuple):
-                    found_list = True
-                    list_max_cols = max(list_max_cols, len(item))
-                elif isinstance(item, dict):
-                    found_dict_or_tuple = True
-                    for k in item.keys():
-                        if k not in col_names:
-                            col_names.append(k)
-                else:
-                    raise TypeError('NiceTable(): when generating column names, data parameter should be a list of ' 
-                                    f'lists/tuples or a list of dicts, but got a list item of type {type(item)}')
+            col_names = self._generate_missing_col_names(data)
 
-                if found_dict_or_tuple and found_list:
-                    raise TypeError('NiceTable(): data parameter expecting a list of lists or a list of dicts,'
-                                    ' got a list that includes both lists and dicts')
-
-            if found_list and not found_dict_or_tuple:
-                col_names = [f'c{i+1:03}' for i in range(list_max_cols)]
-            elif found_dict_or_tuple and not found_list:
-                pass  # col_names is already ready
-
-        # init col-level instance vars
+        # init col-level instance vars based on col_names
         self.total_cols = len(col_names)
         self.columns: List[List[Any]] = list([] for _ in range(self.total_cols))
         self.col_names = list(self.value_none_string if name is None else name for name in col_names)
@@ -168,7 +140,7 @@ class NiceTable:
         self.col_none_string = list(None for _ in range(self.total_cols))
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
 
-        # Populating with initial data if provided
+        # Populating with initial data, if provided
         if data:
             for row in data:
                 self.append(row)
@@ -199,6 +171,39 @@ class NiceTable:
         self.value_escape_type = get_default('value_escape_type')
         self.value_escape_char = get_default('value_escape_char')
         self.value_func = get_default('value_func')
+
+    def _generate_missing_col_names(self, data: List[Any]):
+        """Generate column names (since col_names is missing) by analyzing the data param"""
+
+        #   1. If all items are list/tuple of values, generate names as c001, c002
+        #   2. if all items are dicts, generate a column for each unique key
+
+        col_names = []
+        found_dict = False  # TODO dict or named tuple
+        found_list_or_tuple = False
+        list_max_cols = 0
+        for item in data:  # data is not empty; doing a single pass
+            if isinstance(item, list) or isinstance(item, tuple):
+                found_list_or_tuple = True
+                list_max_cols = max(list_max_cols, len(item))
+            elif isinstance(item, dict):
+                found_dict = True
+                for k in item.keys():  # collecting unique keys
+                    if k not in col_names:
+                        col_names.append(k)
+            else:
+                raise TypeError('NiceTable(): when generating column names, data parameter should be a list of '
+                                f'lists/tuples or a list of dicts, but got a list item of type {type(item)}')
+
+            if found_dict and found_list_or_tuple:
+                raise TypeError('NiceTable(): data parameter expecting either a list of lists/tuples or a list of dicts'
+                                ', got a list that mixes dicts with lists/tuples')
+
+        # if we only encounterd lists/tuples, generate names (else col_names is ready from the dicts)
+        if found_list_or_tuple and not found_dict:
+            col_names = [f'c{i + 1:03}' for i in range(list_max_cols)]
+        return col_names
+
 
     @property
     def header_adjust(self):

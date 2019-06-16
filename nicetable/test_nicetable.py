@@ -498,7 +498,7 @@ class DataManipulations(TestCase):
         with self.assertRaises(ValueError) as context:
             out = NiceTable()
         self.assertTrue(str(context.exception) ==
-                        'NiceTable(): to skip passing col_names, you need to provide the data parameter instead',
+                        'NiceTable(): the data parameter is mandatory if col_names are not provided',
                         'correctly raises when both col_names and data are missing')
 
         with self.assertRaises(TypeError) as context:
@@ -510,13 +510,13 @@ class DataManipulations(TestCase):
             out = NiceTable(data=['cat'])
         self.assertTrue(str(context.exception) == "NiceTable(): when generating column names, data parameter should be "
                             "a list of lists/tuples or a list of dicts, but got a list item of type <class 'str'>",
-                        'correctly raises if data list has an element that is not a list or dict')
+                        'correctly raises if data list has an element that is not a list/tuple/dict')
 
         with self.assertRaises(TypeError) as context:
             out = NiceTable(data=[[1, 2, 3], {'x': 1, 'y': 2}])
-        self.assertTrue(str(context.exception) == 'NiceTable(): data parameter expecting a list of lists or'
-                                                  ' a list of dicts, got a list that includes both lists and dicts',
-                        'correctly raises if data list has both list elements and dict elements')
+        self.assertTrue(str(context.exception) == 'NiceTable(): data parameter expecting either a list of lists/tuples'
+                                                  ' or a list of dicts, got a list that mixes dicts with lists/tuples',
+                        'correctly raises if data list mixes dicts with lists/tuples')
 
     def test__constructor__data_only__list_of_lists(self):
         out1 = NiceTable(data=NiceTable.FORMATTING_SETTINGS)
