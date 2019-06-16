@@ -16,11 +16,10 @@ class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO constructor - support also list of dict (maybe rename the sample JSON?) - field naming?
         TODO check integration with pandas df
         TODO integrate with SQL result set
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
-        TODO column manipulations: add / remove column (data);  hide / show column (print); sort (print)
+        TODO column manipulations: add / rename / remove column (data);  hide / show column (print); sort (print)
     FORMATTING
         TODO custom value quoting (wrapper) like ""
         TODO (idea) ASCII color for headers
@@ -74,7 +73,7 @@ class NiceTable:
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
     def __init__(self,
-                 col_names: List[str],
+                 col_names: Optional[List[str]] = None,
                  rows: Optional[Union[List[List[Any]], List[Dict[str, Any]]]] = None,
                  layout: Optional[str] = None,
                  header: Optional[bool] = None,
@@ -121,8 +120,38 @@ class NiceTable:
         self.value_escape_type = coalesce(value_escape_type, self.value_escape_type)
         self.value_escape_char = coalesce(value_escape_char, self.value_escape_char)
         self.value_func = coalesce(value_func, self.value_func)
-        # initializing the rest of the instance vars to represent an empty table
+
         self.total_lines = 0
+        if not col_names and not rows:
+            raise ValueError('NiceTable(): to skip passing col_names, you need to provide the rows parameter instead')
+        if rows and not isinstance(rows, list):
+            raise TypeError(f'NiceTable(): rows parameter expecting a list, got {type(rows)}')
+        if not col_names:
+            # auto-generating col_names from rows, in a single pass on rows.
+            #   1. if each row is a list of values, generate names as c001, c002 etc
+            #   2. if each row is a dict, generate a column to each unique key
+            #   in all other cases, refuse to generate names
+            found_list = False
+            found_dict = False
+            list_max_cols = 0
+            dict_col_names = []
+            for row in rows:
+                if isinstance(row, list):
+                    found_list = True
+                    list_max_cols = max (list_max_cols, len(row))
+                elif isinstance(row,dict):
+                    found_dict = True
+                    dict_col_names = 'a' // FIXME
+                else:
+                    raise TypeError ('what')  // FIXME
+            if found_list and not found_dict:
+                col_names = [f'c{i+1:03}' for i in range(list_max_cols)]
+            if found_dict and not found_list:
+                pass
+
+
+
+        # init col-level instance vars
         self.total_cols = len(col_names)
         self.columns: List[List[Any]] = list([] for _ in range(self.total_cols))
         self.col_names = list(self.value_none_string if name is None else name for name in col_names)
@@ -131,13 +160,11 @@ class NiceTable:
         self.col_newline_replace = list(None for _ in range(self.total_cols))
         self.col_none_string = list(None for _ in range(self.total_cols))
         self.col_funcs: List[Optional[Callable[[Any], Any]]] = list(None for _ in range(self.total_cols))
-        # Populating with data if provided
+
+        # Populating with initial data if provided
         if rows:
-            if isinstance(rows, list) or isinstance(rows, dict):
-                for r in rows:
-                    self.append(r)
-            else:
-                raise TypeError(f'NiceTable() rows parameter expecting a list, got {type(rows)}')
+           for r in rows:
+             self.append(r)
 
 
     def _init_layout_instance_vars(self):

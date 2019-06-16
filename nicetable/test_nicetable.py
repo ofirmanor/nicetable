@@ -493,16 +493,42 @@ class DataManipulations(TestCase):
                          str(t),
                          'empty table printed nicely')
 
+    def test__constructor_with_no_col_names_no_rows(self):
+        with self.assertRaises(ValueError) as context:
+            out = NiceTable()
+        self.assertTrue(str(context.exception) ==
+                        'NiceTable(): to skip passing col_names, you need to provide the rows parameter instead',
+                        'correctly raises when both col_names and rows are missing')
+
+    def test__constructor_with_bad_type_for_rows(self):
+        with self.assertRaises(TypeError) as context:
+            out = NiceTable(rows='cat')
+        self.assertTrue(str(context.exception) ==  "NiceTable(): rows parameter expecting a list, got <class 'str'>",
+                        'correctly raises if rows is not a list')
+
+    def test__constructor_with_only_rows_as_list_of_lists(self):
+        out1 = NiceTable(rows=NiceTable.FORMATTING_SETTINGS)
+        out2 = NiceTable(['c001', 'c002', 'c003', 'c004'])
+        for row in NiceTable.FORMATTING_SETTINGS:
+            out2.append(row)
+        self.assertEqual(str(out1),
+                         str(out2),
+                         'passing a list of lists correctly auto-generates column names')
+
     def test__dot_annotation(self):
         expected_table = \
-            '+------+--------+\n' + \
-            '|  a   |  bbb   |\n' + \
-            '+------+--------+\n' + \
-            '|   1  |  None  |\n' + \
-            '+------+--------+\n'
+            '+------+-------+\n' + \
+            '|  a   |  bbb  |\n' + \
+            '+------+-------+\n' + \
+            '|   1  |  yYy  |\n' + \
+            '+------+-------+\n'
         self.assertEqual(expected_table,
-                         str(NiceTable(['a', 'bbb']).append([1, None]).set_col_options(0, none_string='xXx')),
-                         'calling .append(...).set_col_options(...) using dot annotation should work')
+                         str(NiceTable(['a', 'bbb'])
+                             .append([1, None])
+                             .set_col_options(1, none_string='yYy')
+                             .set_col_options(0, none_string='xXx')
+                             ),
+                         'using dot annotation should work')
 
     def test__append_dict(self):
         out1 = NiceTable(['name', 'What is this', 'height', 'weight'])
