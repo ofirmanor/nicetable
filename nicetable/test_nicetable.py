@@ -515,6 +515,15 @@ class DataManipulations(TestCase):
                          str(out2),
                          'passing a list of lists correctly auto-generates column names')
 
+    def test__constructor_with_only_rows_as_list_of_dicts(self):
+        out1 = NiceTable(rows=json.loads(NiceTable.SAMPLE_JSON))
+        out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
+        for row in json.loads(NiceTable.SAMPLE_JSON):
+            out2.append(row)
+        self.assertEqual(str(out1),
+                         str(out2),
+                         'passing a list of dicts correctly auto-generates column names')
+
     def test__dot_annotation(self):
         expected_table = \
             '+------+-------+\n' + \

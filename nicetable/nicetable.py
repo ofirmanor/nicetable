@@ -122,34 +122,40 @@ class NiceTable:
         self.value_func = coalesce(value_func, self.value_func)
 
         self.total_lines = 0
+        # auto-generating column names from rows if col_names is not provided
         if not col_names and not rows:
             raise ValueError('NiceTable(): to skip passing col_names, you need to provide the rows parameter instead')
         if rows and not isinstance(rows, list):
             raise TypeError(f'NiceTable(): rows parameter expecting a list, got {type(rows)}')
         if not col_names:
-            # auto-generating col_names from rows, in a single pass on rows.
+            # auto-generating col_names from rows, with a single pass on rows.
             #   1. if each row is a list of values, generate names as c001, c002 etc
-            #   2. if each row is a dict, generate a column to each unique key
+            #   2. if each row is a dict, generate a column to each unique key (using a set)
             #   in all other cases, refuse to generate names
-            found_list = False
+            col_names = []
             found_dict = False
+            found_list = False
             list_max_cols = 0
-            dict_col_names = []
             for row in rows:
                 if isinstance(row, list):
                     found_list = True
                     list_max_cols = max (list_max_cols, len(row))
                 elif isinstance(row,dict):
                     found_dict = True
-                    dict_col_names = 'a' // FIXME
+                    for k in row.keys():
+                        if k not in col_names:
+                            col_names.append(k)
                 else:
                     raise TypeError ('what')  // FIXME
+
             if found_list and not found_dict:
                 col_names = [f'c{i+1:03}' for i in range(list_max_cols)]
             if found_dict and not found_list:
-                pass
-
-
+                pass # col_names is already ready
+            if found_dict and found_list:
+                pass # FIXME RAISE
+            if not found_dict and not found_list:
+                pass # FIXME RAISE
 
         # init col-level instance vars
         self.total_cols = len(col_names)
