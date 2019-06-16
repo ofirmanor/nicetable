@@ -7,17 +7,11 @@ def coalesce(*args: Any) -> Any:
     return next((x for x in args if x is not None), None)
 
 
-def non_printable_to_space(s: str) -> str:
-    """ Return the input string, with non-printable characters replaced with a space (Unicode-friendly) """
-    return s  # TODO implement and double-check
-
-
 class NiceTable:
     """NiceTable let you accumulate records and get them back in a printable tabular format
 
     GENERAL
-        TODO check integration with pandas df (itertuples)
-        TODO integrate with SQL result set
+        TODO check integration with pandas df (itertuples) / SQL result sets
         TODO make a class for layout functions with __category__ , __url__ in the constructor?
         TODO column manipulations: add / rename / remove column (data);  hide / show column (print); sort (print)
     FORMATTING
@@ -179,11 +173,13 @@ class NiceTable:
         #   2. if all items are dicts, generate a column for each unique key
 
         col_names = []
-        found_dict = False  # TODO dict or named tuple
+        found_dict = False  # TODO also support named tuple???
         found_list_or_tuple = False
         list_max_cols = 0
         for item in data:  # data is not empty; doing a single pass
-            if isinstance(item, list) or isinstance(item, tuple):
+            if item is None:
+                pass  # if an entire line is None, it does not affect column names
+            elif isinstance(item, list) or isinstance(item, tuple):
                 found_list_or_tuple = True
                 list_max_cols = max(list_max_cols, len(item))
             elif isinstance(item, dict):
@@ -199,7 +195,7 @@ class NiceTable:
                 raise TypeError('NiceTable(): data parameter expecting either a list of lists/tuples or a list of dicts'
                                 ', got a list that mixes dicts with lists/tuples')
 
-        # if we only encounterd lists/tuples, generate names (else col_names is ready from the dicts)
+        # if we only encountered lists/tuples, generate names (else col_names is ready from the dicts)
         if found_list_or_tuple and not found_dict:
             col_names = [f'c{i + 1:03}' for i in range(list_max_cols)]
         return col_names
@@ -311,14 +307,17 @@ class NiceTable:
         self.value_escape_char = '\\'
         self.value_min_len = 3
 
-    def append(self, values: Union[List[Any], Dict[str, Any], Tuple]) -> 'NiceTable':
-        """Append a single line from list, a dict or a tuple."""
+    def append(self, values: Optional[Union[List[Any], Dict[str, Any], Tuple]]) -> 'NiceTable':
+        """Append a single line from input: list / dict / tuple / None."""
         if isinstance(values, dict):
             append_func = self._append_dict
         elif isinstance(values, list) or isinstance(values, tuple):
             append_func = self._append_unnamed_collection
+        elif values is None:
+            append_func = self._append_unnamed_collection
+            values = []
         else:
-            raise TypeError(f'NiceTable.append() expecting a list or a dict, got {type(values)}')
+            raise TypeError(f'NiceTable.append(): expecting a list / dict / tuple / None, got {type(values)}')
 
         self.total_lines += 1
         append_func(values)
@@ -327,7 +326,7 @@ class NiceTable:
     def _append_unnamed_collection(self, values: Union[List[Any], Tuple]) -> None:
         """Append a row, using None if not enough elements"""
         if len(values) > self.total_cols:
-            raise ValueError(f'NiceTable.append() got a list of {len(values)} elements, ' +
+            raise ValueError(f'NiceTable.append(): got a list of {len(values)} elements, ' +
                              'expecting up to {self.total_cols}')
 
         for i in range(self.total_cols):

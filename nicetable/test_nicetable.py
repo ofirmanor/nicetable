@@ -546,6 +546,28 @@ class DataManipulations(TestCase):
                          str(out2),
                          'passing a list of dicts correctly auto-generates column names')
 
+    def test__constructor__data_only__list_of_mixed_dicts(self):
+        out = NiceTable(data=[{"a": 1, "b": 2},
+                              {"a": 11, "c": 33, "e": 55},
+                              {"d": 999},
+                              None,
+                              {"b": 4444, "d": 9999}],
+                        value_none_string='---')
+        expected_out = \
+            '+-------+---------+-------+-------+---------+\n' + \
+            '|  a    |  b      |  c    |  e    |  d      |\n' + \
+            '+-------+---------+-------+-------+---------+\n' + \
+            '|    1  |      2  |  ---  |  ---  |    ---  |\n' + \
+            '|   11  |    ---  |   33  |   55  |    ---  |\n' + \
+            '|  ---  |    ---  |  ---  |  ---  |    999  |\n' + \
+            '|  ---  |    ---  |  ---  |  ---  |    ---  |\n' + \
+            '|  ---  |   4444  |  ---  |  ---  |   9999  |\n' + \
+            '+-------+---------+-------+-------+---------+\n'
+
+        self.assertEqual(expected_out,
+                         str(out),
+                         'passing a list of non-uniform dicts correctly auto-generates column names')
+
     def test__dot_annotation(self):
         expected_table = \
             '+------+-------+\n' + \
@@ -560,6 +582,14 @@ class DataManipulations(TestCase):
                              .set_col_options(0, none_string='xXx')
                              ),
                          'using dot annotation should work')
+
+    def test__append_bad_type(self):
+        with self.assertRaises(TypeError) as context:
+            out = NiceTable(['Layout', 'Description'], NiceTable.builtin_layouts())
+            out.append(123)
+        self.assertTrue(str(context.exception) == "NiceTable.append(): " 
+                                                  "expecting a list / dict / tuple / None, got <class 'int'>",
+                        "append() accepts None or list/dict/tuple")
 
     def test__append_dict(self):
         out1 = NiceTable(['name', 'What is this', 'height', 'weight'])
@@ -629,5 +659,3 @@ class DataManipulations(TestCase):
 if __name__ == '__main__':
     import unittest
     unittest.main()
-
-# TODO constructor should reject None / [] column names
