@@ -5,7 +5,6 @@
 ## Quickstart
 If your data is a list of dicts, a list of tuples or a list of lists, you can directly print them.  
 For example, using the string `NiceTable.SAMPLE_JSON` (which when parsed becomes a list of dicts): 
-1. Import: 
 ````python
 import json
 from nicetable.nicetable import NiceTable
@@ -23,8 +22,8 @@ Output:
 |  150  |  Mewtwo     |  Psychic       |     200  |  122.000  |
 +-------+-------------+----------------+----------+-----------+
 ````
-The first three columns happen to hold strings, so they are by default they left adjusted, and the column width is set automatically by the longest value.  
-The last two columns happen to hold numbers, so they are nicely well-alligned to the right (meaning all their ones digits are printed in the same position).  
+The first three columns happen to hold strings, so they are by default left adjusted, and their column width is set automatically by the longest value.  
+The last two columns happen to hold numbers, so they are nicely well-alligned to the right (meaning all their ones digits are printed in the same position, see the weight column).  
 
 You can pass formatting options to the `NiceTable` constructor. For example, change the layout to CSV, and change the separator to pipe:
 ````python
@@ -32,7 +31,7 @@ import json
 from nicetable.nicetable import NiceTable
 
 parsed_json = json.loads(NiceTable.SAMPLE_JSON)
-        print(NiceTable(data=parsed_json, layout='csv', sep_vertical='|'))
+print(NiceTable(data=parsed_json, layout='csv', sep_vertical='|'))
 ````
 Output:
 ````
