@@ -2,26 +2,49 @@
 * A clean and elegant way to print text tables in Python with minimal boilerplate code.
 * Built with modern Python (including type annotations) and has an extensive test suite. Requires Python 3.6 and up.
 
-## Typical usage
-1. Import:  
-`from nicetable.nicetable import NiceTable`
+## Quickstart
+If your data is a list of dicts, a list of tuples or a list of lists, you can directly print them.  
+For example, using the string `NiceTable.SAMPLE_JSON` (which when parsed becomes a list of dicts): 
+1. Import: 
+````python
+import json
+from nicetable.nicetable import NiceTable
 
-2. Create a `NiceTable`, providing a `List`of column names.  
-You can optionally pick a table layout, or override any formatting option:  
-`out = NiceTable(['Part ID','Weight(kg)'])`  
-`out = NiceTable(['Part ID','Weight(kg)'], layout='grep')`  
-`out = NiceTable(['Part ID','Weight(kg)'], layout='csv', header=False)`  
+parsed_json = json.loads(NiceTable.SAMPLE_JSON)
+print(NiceTable(data=parsed_json))
+````
+Output:
+````
++-------+-------------+----------------+----------+-----------+
+|  id   |  name       |  type          |  height  |  weight   |
++-------+-------------+----------------+----------+-----------+
+|  001  |  Bulbasaur  |  Grass/Poison  |      70  |    6.901  |
+|  025  |  Pikachu    |  Electric      |      40  |    6.100  |
+|  150  |  Mewtwo     |  Psychic       |     200  |  122.000  |
++-------+-------------+----------------+----------+-----------+
+````
+The first three columns happen to hold strings, so they are by default they left adjusted, and the column width is set automatically by the longest value.  
+The last two columns happen to hold numbers, so they are nicely well-alligned to the right (meaning all their ones digits are printed in the same position).  
 
-3. Append new rows by calling `append()`, passing a `List` of values:  
-`out.append(my_list)`  
-`out.append(['626kst/j8',1.37])`  
+You can pass formatting options to the `NiceTable` constructor. For example, change the layout to CSV, and change the separator to pipe:
+````python
+import json
+from nicetable.nicetable import NiceTable
 
-4. Print:  
-`print(out)`
+parsed_json = json.loads(NiceTable.SAMPLE_JSON)
+        print(NiceTable(data=parsed_json, layout='csv', sep_vertical='|'))
+````
+Output:
+````
+id|name|type|height|weight
+001|Bulbasaur|Grass/Poison|70|6.901
+025|Pikachu|Electric|40|6.1
+150|Mewtwo|Psychic|200|122
+````
+(note that the CSV format prints the numeric columns "as-is").  
 
-#### Example
-The class function `NiceTable.supported_layouts()` returns a `List` of [name, description] of all the builtin layouts.  
-This example uses `NiceTable` to print that list with the default table layout:
+You can also create a NiceTable object, populate it iteratively, and print it multiple times with different formatting.  
+This example uses the class function `NiceTable.supported_layouts()` returns a list of all lists:  
 ````python
 from nicetable.nicetable import NiceTable
 
@@ -42,48 +65,8 @@ Output:
 |  tsv      |  tab-separated values with a one-line header.                                                        |
 +-----------+------------------------------------------------------------------------------------------------------+
 ````
-#### Layouts and formatting settings
-You can pick a table layout in the constructor, with the `layout=` parameter.  
-In addition, you can change the layout or override any other formatting settings at any time, if needed.  
-*Internally, `NiceTable` stores the values as-is, and generates formatted strings from them only when the table is printed.*  
 
-The next example uses the builtin `NiceTable.SAMPLE_JSON`, which returns some sample JSON data.  
-The code loops over a list of dictionaries, cherry-picking some values into the table columns. It prints the table, than changes the layout to `csv` and overrides a formatting option (changes the separator from `,` to `|`) before printing it again.
-````python
-import json
-from nicetable.nicetable import NiceTable
 
-out = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
-for pokemon in json.loads(NiceTable.SAMPLE_JSON):
-    out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
-print('-- default format --\n')
-print(out)
-out.layout = 'csv'
-out.sep_vertical = '|'
-print('-- CSV with a pipe separator --\n')
-print(out)
-`````
-Output:
-````
--- default format --
-
-+-------------+----------------+--------------+--------------+
-|  Name       |  Type          |  Height(cm)  |  Weight(kg)  |
-+-------------+----------------+--------------+--------------+
-|  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |
-|  Pikachu    |  Electric      |          40  |       6.100  |
-|  Mewtwo     |  Psychic       |         200  |     122.000  |
-+-------------+----------------+--------------+--------------+
-
--- CSV with a pipe separator --
-
-Name|Type|Height(cm)|Weight(kg)
-Bulbasaur|Grass/Poison|70|6.901
-Pikachu|Electric|40|6.1
-Mewtwo|Psychic|200|122
-````
-*Note that the `default` layout automatically identify numeric columns and print them well-aligned to the right (see next section).*  
-*For example, the last column input was 6.901, 6.1 (`float`), 122 (`int`), as can be seen in the `csv` output.*
 
 ## Cell adjustment
 * Cell contents can be adjusted `left`, `center` or `right`, and are space-padded to the width of the longest value in the column (see also next section on wrapping).  
@@ -216,14 +199,16 @@ For example: `out.header = False`
 |  value_escape_char      |  str       |  \        |  a string to replace or prefix `sep_vertical`, based on `value_escape_type`                                                    |
 |  value_func             |  function  |  None     |   a function to pre-process the value before any other settings apply                                                          |
 
-*The table above was generated by iterating on `NiceTable.FORMATTING_SETTINGS` and using the `md` layout:*
+*The table above was generated from `NiceTable.FORMATTING_SETTINGS` using the `md` layout:*
 ````python
 from nicetable.nicetable import NiceTable
+print(NiceTable(col_names=['Setting', 'Type', 'Default', 'Description'],
+                data=NiceTable.FORMATTING_SETTINGS,
+                layout='md'))
 
-out = NiceTable(['Setting', 'Type', 'Default', 'Description'], layout='md')
-for setting in NiceTable.FORMATTING_SETTINGS:
-    out.append(setting)
-print(out)
+# Could alternatively be called by position:
+# print(NiceTable(['Setting', 'Type', 'Default', 'Description'], NiceTable.FORMATTING_SETTINGS, 'md'))
+
 ````
 
 ## Column-level settings
