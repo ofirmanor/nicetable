@@ -112,7 +112,7 @@ from nicetable.nicetable import NiceTable
 
 input = [{"name": "Jones Green", "height_cm": 98.8, "shirt": "XL"},
          {"name": "Jill",        "height_cm": 175,   "birth_year": 1956}]
-print(NiceTable(input, col_names ['name', 'birth_year', 'height_cm']))
+print(NiceTable(input, col_names=['name', 'birth_year', 'height_cm']))
 ````
 Output:
 ````
@@ -144,7 +144,7 @@ Output:
 ### Fine-grained NiceTable control        
 Instead of creating a NiceTable object inside a print() statement, you can alternatively:
 1. Create a standalone NiceTable object, specifying a list of column names.  
-2. Populate it iteratively with the append() function, passing a list, a tuple or a dict), representing a new row.
+2. Populate it iteratively with the append() function, passing a list, a tuple or a dict, representing a new row.
 3. Print it multiple times with different formatting.  
 
 This example uses the string `NiceTable.SAMPLE_JSON`, parses it as JSON, and chery-pick four columns:  
@@ -226,7 +226,7 @@ This function accepts either a column name or a column position for the first pa
 ````python
 out = NiceTable(json.loads(NiceTable.SAMPLE_JSON))
 out.rename_columns(['ID','Name', 'Type', 'Height(cm)', ' Weight(kg)'])
-# set the second column options by position (array positions starts with zero)
+# set the second column options by position (column positions starts from zero)
 out.set_col_options(1, adjust='center')
 # set the third column options by column name
 out.set_col_options('Type',
