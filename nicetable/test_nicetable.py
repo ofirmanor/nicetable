@@ -655,6 +655,31 @@ class DataManipulations(TestCase):
                          str(out),
                          'initializing NiceTable with a mixed list of dicts/tuples/lists works')
 
+    def test__rename_columns(self):
+        out = NiceTable(data=json.loads(NiceTable.SAMPLE_JSON))
+        with self.assertRaises(TypeError) as context:
+            out.rename_columns('a')
+        self.assertTrue(str(context.exception) == "NiceTable.rename_columns(): expecting a list, got <class 'str'>",
+                        'rename_columns() expects a list of column names, not a string')
+
+        with self.assertRaises(ValueError) as context:
+            out.rename_columns(['a', 'b', 'c'])
+        self.assertTrue(str(context.exception) == "NiceTable.rename_columns(): " 
+                                                  "there are 5 columns, but got a list of 3 column names",
+                        "must provide names for all columns")
+
+        out.rename_columns(['ID', 'Name', 'Type', 'Height(cm)', 'Weight(kg)'])
+        expected_out = \
+            '+-------+-------------+----------------+--------------+--------------+\n' + \
+            '|  ID   |  Name       |  Type          |  Height(cm)  |  Weight(kg)  |\n' + \
+            '+-------+-------------+----------------+--------------+--------------+\n' + \
+            '|  001  |  Bulbasaur  |  Grass/Poison  |          70  |       6.901  |\n' + \
+            '|  025  |  Pikachu    |  Electric      |          40  |       6.100  |\n' + \
+            '|  150  |  Mewtwo     |  Psychic       |         200  |     122.000  |\n' + \
+            '+-------+-------------+----------------+--------------+--------------+\n'
+        self.assertEqual(expected_out,
+                         str(out),
+                         'Correctly applying new column names')
 
 if __name__ == '__main__':
     import unittest

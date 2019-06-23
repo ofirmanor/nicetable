@@ -583,3 +583,13 @@ class NiceTable:
         else:
             raise TypeError('NiceTable.get_column(): ' 
                             f'expects str or int (column name or position), got {type(col)}')
+
+    # def rename_col
+    def rename_columns(self, col_names: List[str]) -> 'NiceTable':
+        if not isinstance(col_names, list):
+            raise TypeError(f'NiceTable.rename_columns(): expecting a list, got {type(col_names)}')
+        if len(col_names) != len(self.col_names):
+            raise ValueError('NiceTable.rename_columns(): '
+                   f'there are {len(self.col_names)} columns, but got a list of {len(col_names)} column names')
+        self.col_names = col_names
+        return self
