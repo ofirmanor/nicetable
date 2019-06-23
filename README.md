@@ -25,7 +25,7 @@ Note that:
 2. String columns are by default left adjusted, and their column width is set automatically by the longest value.  
 3. Numeric columns are nicely well-aligned by the digit to the right (see the height_cm column).  
 
-You can specify a different layout as the second parameter, pass formatting options by name.  
+You can specify a different layout as the second parameter and pass other   formatting options by name.  
 You can also use a dot notation to specify column-level options (by column name or column position).  
 For example, printing as a pipe-delimited CSV, or printing as a regular CSV, without an header line, when None values are printed as 'N/A' only for the 'shirt' column:
 ````python
@@ -49,7 +49,7 @@ Jill,175,N/A,1956
 ### Working with different input types and column names 
 #### List of lists / List of tuples
 These inputs are interpreted as list of rows, each with a list / tuple of columns values. 
-* if you do not specify column names, they will be assigned automatically, as 'C001', 'C002' etc:
+* if you *DO NOT* specify column names, they will be assigned automatically, as 'C001', 'C002' etc:
 ````python
 from nicetable.nicetable import NiceTable
  
@@ -66,7 +66,7 @@ Output:
 |     1  |     3  |     5  |     7  |     9  |
 +--------+--------+--------+--------+--------+
 ````
-* If you do specify a list of column names, they will be used instead of the auto-generated names.  
+* If you *DO* specify a list of column names, those will be used instead of the auto-generated names.  
 The next example uses the function `NiceTable.builtin_layouts()` that returns a list of lists:
 ````python
 from nicetable.nicetable import NiceTable
@@ -87,8 +87,8 @@ Output:
 ````
 
 #### List of dicts 
-This input is interpreted as list of rows, each with a dict of column name : column value pairs.
-*  If you do not specify column names, they will be collected from the input, as in the first example:
+This input is interpreted as list of rows, each with a dict of {column name : column value} pairs.
+*  If you *DO NOT* specify column names, they will be collected from the input, as in the first example:
  ````python
 from nicetable.nicetable import NiceTable
 
@@ -105,7 +105,7 @@ Output:
 |  Jill         |      175.0  |  None   |        1956  |
 +---------------+-------------+---------+--------------+
 ````
-* If you specify a list of column names, *ONLY THOSE COLUMNS WILL BE COLLECTED*.  
+* If you *DO* specify a list of column names, *ONLY THOSE COLUMNS WILL BE COLLECTED*.  
 For example, collecting only three columns, and setting a specific column order:
  ````python
 from nicetable.nicetable import NiceTable
