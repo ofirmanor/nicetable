@@ -10,7 +10,7 @@ class LayoutOptions(TestCase):
 
     def setUp(self):  # TODO: maybe replace with a factory class like factory_boy
         # all layout options tests starts with the same table data:
-        self.tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'], layout='default')
+        self.tbl = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
         for pokemon in json.loads(NiceTable.SAMPLE_JSON):
             self.tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
 
@@ -461,8 +461,8 @@ class Layouts(TestCase):
     # TODO add tests for each layout
     def setUp(self):
         # all layout tests use the same data
-        self.simple_tbl = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
-        self.complex_tbl = NiceTable(['Name', None, 'Height\n(cm)', 'Weight\n(kg)'])
+        self.simple_tbl = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
+        self.complex_tbl = NiceTable(col_names=['Name', None, 'Height\n(cm)', 'Weight\n(kg)'])
         for pokemon in json.loads(NiceTable.SAMPLE_JSON):
             self.simple_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
             self.complex_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
@@ -483,7 +483,7 @@ class Layouts(TestCase):
 
 class DataManipulations(TestCase):
     def test__empty_table(self):
-        t = NiceTable(['a', 'b'])
+        t = NiceTable(col_names=['a', 'b'])
         expected_table = \
             '+-----+-----+\n' + \
             '|  a  |  b  |\n' + \
@@ -519,8 +519,8 @@ class DataManipulations(TestCase):
                         'correctly raises if data list mixes dicts with lists/tuples')
 
     def test__constructor__data_only__list_of_lists(self):
-        out1 = NiceTable(data=NiceTable.FORMATTING_SETTINGS)
-        out2 = NiceTable(['c001', 'c002', 'c003', 'c004'])
+        out1 = NiceTable(NiceTable.FORMATTING_SETTINGS)
+        out2 = NiceTable(col_names=['c001', 'c002', 'c003', 'c004'])
         for row in NiceTable.FORMATTING_SETTINGS:
             out2.append(row)
         self.assertEqual(str(out1),
@@ -529,8 +529,8 @@ class DataManipulations(TestCase):
 
     def test__constructor__data_only__list_of_tuples(self):
         tuples = [("apple", "banana", "cherry"), ("dog", "cat")]
-        out1 = NiceTable(data=tuples)
-        out2 = NiceTable(['c001', 'c002', 'c003'])
+        out1 = NiceTable(tuples)
+        out2 = NiceTable(col_names=['c001', 'c002', 'c003'])
         for row in tuples:
             out2.append(row)
         self.assertEqual(str(out1),
@@ -538,8 +538,8 @@ class DataManipulations(TestCase):
                          'passing a list of tuples correctly auto-generates column names')
 
     def test__constructor__data_only__list_of_dicts(self):
-        out1 = NiceTable(data=json.loads(NiceTable.SAMPLE_JSON))
-        out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
+        out1 = NiceTable(json.loads(NiceTable.SAMPLE_JSON))
+        out2 = NiceTable(col_names=['id', 'name', 'type', 'height', 'weight'])
         for row in json.loads(NiceTable.SAMPLE_JSON):
             out2.append(row)
         self.assertEqual(str(out1),
@@ -576,7 +576,7 @@ class DataManipulations(TestCase):
             '|   1  |  yYy  |\n' + \
             '+------+-------+\n'
         self.assertEqual(expected_table,
-                         str(NiceTable(['a', 'bbb'])
+                         str(NiceTable(col_names=['a', 'bbb'])
                              .append([1, None])
                              .set_col_options(1, none_string='yYy')
                              .set_col_options(0, none_string='xXx')
@@ -585,15 +585,15 @@ class DataManipulations(TestCase):
 
     def test__append_bad_type(self):
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(['Layout', 'Description'], NiceTable.builtin_layouts())
+            out = NiceTable(NiceTable.builtin_layouts(), col_names=['Layout', 'Description'])
             out.append(123)
         self.assertTrue(str(context.exception) == "NiceTable.append(): " 
                                                   "expecting a list / dict / tuple / None, got <class 'int'>",
                         "append() accepts None or list/dict/tuple")
 
     def test__append_dict(self):
-        out1 = NiceTable(['name', 'What is this', 'height', 'weight'])
-        out2 = NiceTable(['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
+        out1 = NiceTable(col_names=['name', 'What is this', 'height', 'weight'])
+        out2 = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
         for pokemon in json.loads(NiceTable.SAMPLE_JSON):
             out1.append(pokemon)
             out2.append(pokemon)
@@ -624,8 +624,8 @@ class DataManipulations(TestCase):
                          'append with dict works even if no field is matching')
 
     def test__constructor__col_names_and_data__list_of_list(self):
-        out1 = NiceTable(['Layout', 'Description'], NiceTable.builtin_layouts())
-        out2 = NiceTable(['Layout', 'Description'])
+        out1 = NiceTable(NiceTable.builtin_layouts(), col_names=['Layout', 'Description'])
+        out2 = NiceTable(col_names=['Layout', 'Description'])
         for layout in NiceTable.builtin_layouts():
             out2.append(layout)
         self.assertEqual(str(out1),
@@ -633,8 +633,8 @@ class DataManipulations(TestCase):
                          'initializing NiceTable with a list of lists is the same as appending each list in a loop')
 
     def test__constructor__col_names_and_data__list_of_dict(self):
-        out1 = NiceTable(['id', 'name', 'type', 'height', 'weight'], json.loads(NiceTable.SAMPLE_JSON))
-        out2 = NiceTable(['id', 'name', 'type', 'height', 'weight'])
+        out1 = NiceTable(json.loads(NiceTable.SAMPLE_JSON), col_names=['id', 'name', 'type', 'height', 'weight'])
+        out2 = NiceTable(col_names=['id', 'name', 'type', 'height', 'weight'])
         for layout in json.loads(NiceTable.SAMPLE_JSON):
             out2.append(layout)
         self.assertEqual(str(out1),
@@ -642,7 +642,8 @@ class DataManipulations(TestCase):
                          'initializing NiceTable with a list of dicts is the same as appending each dict in a loop')
 
     def test__constructor__col_names_and_data__mixed_list(self):
-        out = NiceTable(['a', 'b', 'x', 'y'], data=[[1, 2, 3], {'x': 1, 'z': 2}, ("apple", "banana", "cherry")])
+        out = NiceTable([[1, 2, 3], {'x': 1, 'z': 2}, ("apple", "banana", "cherry")],
+                        col_names=['a', 'b', 'x', 'y'])
         expected_out = \
             '+---------+----------+----------+--------+\n' \
             '|  a      |  b       |  x       |  y     |\n' \
@@ -680,6 +681,7 @@ class DataManipulations(TestCase):
         self.assertEqual(expected_out,
                          str(out),
                          'Correctly applying new column names')
+
 
 if __name__ == '__main__':
     import unittest

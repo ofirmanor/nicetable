@@ -18,6 +18,7 @@ class NiceTable:
         TODO custom value quoting (wrapper) like ""
         TODO (idea) ASCII color for headers
         TODO custom separator function for (md layout); use header marker for alignment (:--- :--: ---:)
+        TODO user-defined handling of append mismatch (silently truncate long list)
     PACKAGING / PUBLISHING
         TODO docstring for __init__ or class
     """
@@ -50,7 +51,7 @@ class NiceTable:
             f'handling of `sep_vertical` inside a value, one of: {VALUE_ESCAPING_OPTIONS}'],
         ['value_escape_char', 'str', '\\',
             'a string to replace or prefix `sep_vertical`, based on `value_escape_type`'],
-        ['value_func', 'function', None, ' a function to pre-process the value before any other settings apply']
+        ['value_func', 'function', None, 'a function to pre-process the value before any other settings apply']
     ]
 
     # noinspection SpellCheckingInspection
@@ -67,9 +68,9 @@ class NiceTable:
         return list([x[len(prefix):], getattr(cls, x).__doc__] for x in dir(cls) if x.startswith(prefix))
 
     def __init__(self,
-                 col_names: Optional[List[str]] = None,
                  data: Optional[Union[List[List[Any]], List[Dict[str, Any]], List[Tuple]]] = None,
                  layout: Optional[str] = None,
+                 col_names: Optional[List[str]] = None,
                  header: Optional[bool] = None,
                  header_sepline: Optional[bool] = None,
                  header_adjust: Optional[str] = None,
