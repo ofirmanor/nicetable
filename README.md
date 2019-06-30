@@ -155,6 +155,7 @@ from nicetable.nicetable import NiceTable
 out = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
 for pokemon in json.loads(NiceTable.SAMPLE_JSON):
     out.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
+
 print(out)
 out.layout = 'md'
 print(out)
@@ -224,6 +225,9 @@ The `set_col_options()` function sets allows you to set the following settings a
 
 This function accepts either a column name or a column position for the first parameter. For example:  
 ````python
+import json
+from nicetable.nicetable import NiceTable
+
 out = NiceTable(json.loads(NiceTable.SAMPLE_JSON))
 out.rename_columns(['ID','Name', 'Type', 'Height(cm)', ' Weight(kg)'])
 # set the second column options by position (column positions starts from zero)
@@ -273,7 +277,9 @@ The default policy is `wrap`, which means the value will be broken to multiple l
 Alternatively, specify the `truncate` policy to have to values truncated.  
 The following examples demonstrates the two policies:
 ````python
-out = NiceTable(['Code', 'Product Description(Long)'])
+from nicetable.nicetable import NiceTable
+
+out = NiceTable(col_names=['Code', 'Product Description(Long)'])
 out.append([1, 'Boeing 777. Batteries not included. May contain nuts.'])
 out.append([2, 'Sack of sand'])
 print(out)
@@ -312,7 +318,9 @@ Output:
 When newlines are encountered in a column name or a value, they by default cause the text to wrap.  Alternatively, you can ask that newlines will be replaced, by setting `value_newline_replace` to an alternative string (default is `None`).  
 The following example first shows the default behavior, and than shows replacing newlines with the string `\n`:
 ````python
-out = NiceTable(['Code', 'Product Description\n(Long)']) \
+from nicetable.nicetable import NiceTable
+
+out = NiceTable(col_names=['Code', 'Product Description\n(Long)']) \
     .append([1, 'Boeing 777\nBatteries not included.\nMay contain nuts.']) \
     .append([2, 'Sack of sand'])
 print(out)
