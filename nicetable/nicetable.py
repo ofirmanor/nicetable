@@ -494,7 +494,7 @@ class NiceTable:
 
     def _generate_sepline(self) -> str:
         """Generate a separator line"""
-        out, sep_elements = [], []
+        sep_elements = []
         for i in range(len(self.col_names)):
             # computing column name length - taking into account multi-line headers
             col_name_length = max(len(col_name_line) for col_name_line in self._col_name_as_str_list(i))

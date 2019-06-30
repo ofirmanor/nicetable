@@ -496,24 +496,24 @@ class DataManipulations(TestCase):
     # noinspection PyUnusedLocal,PyTypeChecker
     def test__constructor__bad_data_field(self):
         with self.assertRaises(ValueError) as context:
-            out = NiceTable()
+            print(NiceTable())
         self.assertTrue(str(context.exception) ==
                         'NiceTable(): the data parameter is mandatory if col_names are not provided',
                         'correctly raises when both col_names and data are missing')
 
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(data='cat')
+            print(NiceTable(data='cat'))
         self.assertTrue(str(context.exception) == "NiceTable(): data parameter expecting a list, got <class 'str'>",
                         'correctly raises if data is not a list')
 
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(data=['cat'])
+            print(NiceTable(data=['cat']))
         self.assertTrue(str(context.exception) == "NiceTable(): when generating column names, data parameter should be "
                             "a list of lists/tuples or a list of dicts, but got a list item of type <class 'str'>",
                         'correctly raises if data list has an element that is not a list/tuple/dict')
 
         with self.assertRaises(TypeError) as context:
-            out = NiceTable(data=[[1, 2, 3], {'x': 1, 'y': 2}])
+            print(out = NiceTable(data=[[1, 2, 3], {'x': 1, 'y': 2}]))
         self.assertTrue(str(context.exception) == 'NiceTable(): data parameter expecting either a list of lists/tuples'
                                                   ' or a list of dicts, got a list that mixes dicts with lists/tuples',
                         'correctly raises if data list mixes dicts with lists/tuples')
