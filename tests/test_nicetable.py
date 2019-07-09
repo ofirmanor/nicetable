@@ -498,7 +498,7 @@ class DataManipulations(TestCase):
         with self.assertRaises(ValueError) as context:
             print(NiceTable())
         self.assertTrue(str(context.exception) ==
-                        'NiceTable(): the data parameter is mandatory if col_names are not provided',
+                        'NiceTable(): provide at least one of the following parameters: data, col_names',
                         'correctly raises when both col_names and data are missing')
 
         with self.assertRaises(TypeError) as context:

@@ -118,7 +118,7 @@ class NiceTable:
 
         self.total_lines = 0
         if not data and not col_names:
-            raise ValueError('NiceTable(): the data parameter is mandatory if col_names are not provided')
+            raise ValueError('NiceTable(): provide at least one of the following parameters: data, col_names')
         if data and not isinstance(data, list):
             raise TypeError(f'NiceTable(): data parameter expecting a list, got {type(data)}')
 
