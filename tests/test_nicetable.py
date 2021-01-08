@@ -1,7 +1,6 @@
 from unittest import TestCase
 from nicetable.nicetable import NiceTable
 from typing import List
-import json
 import numbers
 
 
@@ -11,8 +10,10 @@ class LayoutOptions(TestCase):
     def setUp(self):  # TODO: maybe replace with a factory class like factory_boy
         # all layout options tests starts with the same table data:
         self.tbl = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
-        for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+        for pokemon in NiceTable.SAMPLE_POKEMON:
             self.tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
+
+        self.planet_tbl = NiceTable(NiceTable.SAMPLE_PLANETS)
 
     def default_to_lines_cols(self) -> List[List[str]]:
         """Capture the test table as a string and return it as a list (by line) of list of string values."""
@@ -239,6 +240,24 @@ class LayoutOptions(TestCase):
                          str(self.tbl),
                          'truncating long column names and values to five characters')
 
+        self.tbl.value_too_long_policy = 'break-word'
+        expected = \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Name   |  Type   |  Heigh  |  Weigh  |\n' + \
+            '|         |         |  t(cm)  |  t(kg)  |\n' + \
+            '+---------+---------+---------+---------+\n' + \
+            '|  Bulba  |  Grass  |     70  |    6.9  |\n' + \
+            '|  saur   |  /Pois  |         |     01  |\n' + \
+            '|         |  on     |         |         |\n' + \
+            '|  Pikac  |  Elect  |     40  |    6.1  |\n' + \
+            '|  hu     |  ric    |         |     00  |\n' + \
+            '|  Mewtw  |  Psych  |    200  |  122.0  |\n' + \
+            '|  o      |  ic     |         |     00  |\n' + \
+            '+---------+---------+---------+---------+\n'
+        self.assertEqual(expected,
+                         str(self.tbl),
+                         'breaking long column names and values to five characters')
+
         self.tbl.value_max_len = 5
         self.tbl.value_too_long_policy = 'wrap'
         self.tbl.col_names[3] = 'a\n1234567\nabcdef\nXYZ\n'
@@ -256,6 +275,69 @@ class LayoutOptions(TestCase):
         self.assertEqual(expected_header,
                          header_lines,
                          'combining multiple newlines in the header with max_value_len and wrapping')
+
+        self.planet_tbl.value_max_len = 50
+        self.planet_tbl.value_too_long_policy = 'break-word'
+        expected = \
+                '+-----------+----------+-------------------+------------------------------------------------------+\n' + \
+                '|  Name     |  Symbol  |  Mass             |  Description                                         |\n' + \
+                '+-----------+----------+-------------------+------------------------------------------------------+\n' + \
+                '|  Mercury  |  ☿       |  3.3011×10^23 kg  |  Mercury is the smallest and closest planet to the   |\n' + \
+                '|           |          |                   |  sun in the Solar System. Its orbit around the Sun   |\n' + \
+                '|           |          |                   |  takes 87.97 Earth days, the shortest of all the     |\n' + \
+                '|           |          |                   |  planets in the Solar System. It is named after the  |\n' + \
+                '|           |          |                   |  Greek god Hermes (Ερμής), translated into Latin     |\n' + \
+                '|           |          |                   |  Mercurius Mercury, god of commerce, messenger of    |\n' + \
+                '|           |          |                   |  the gods, mediator between gods and mortals.        |\n' + \
+                '|  Venus    |  ♀       |  4.8690×10^24 kg  |  Venus is the second planet from the Sun. It is      |\n' + \
+                '|           |          |                   |  named after the Roman goddess of love and beauty.   |\n' + \
+                '|           |          |                   |  As the second-brightest natural object in Earth\'s   |\n' + \
+                '|           |          |                   |  night sky after the Moon, Venus can cast shadows    |\n' + \
+                '|           |          |                   |  and can be, on rare occasion, visible to the naked  |\n' + \
+                '|           |          |                   |  eye in broad daylight.                              |\n' + \
+                '|  Earth    |  ♁       |  5.972×10^24 kg   |  Earth is the third planet from the Sun and the      |\n' + \
+                '|           |          |                   |  only astronomical object known to harbor life.      |\n' + \
+                '|           |          |                   |  About 29% of Earth\'s surface is land consisting of  |\n' + \
+                '|           |          |                   |  continents and islands. The remaining 71% is        |\n' + \
+                '|           |          |                   |  covered with water, mostly by oceans but also by    |\n' + \
+                '|           |          |                   |  lakes, rivers and other fresh water, which          |\n' + \
+                '|           |          |                   |  together constitute the hydrosphere.                |\n' + \
+                '|  Mars     |  ♂       |  6.4191×10^23 kg  |  Mars is the fourth planet from the Sun and the      |\n' + \
+                '|           |          |                   |  second-smallest planet in the Solar System, being   |\n' + \
+                '|           |          |                   |  larger than only Mercury. In English, Mars carries  |\n' + \
+                '|           |          |                   |  the name of the Roman god of war and is often       |\n' + \
+                '|           |          |                   |  referred to as the "Red Planet".                    |\n' + \
+                '|  Jupiter  |  ♃       |  1.8987×10^27 kg  |  Jupiter is the fifth planet from the Sun and the    |\n' + \
+                '|           |          |                   |  largest in the Solar System. It is a gas giant      |\n' + \
+                '|           |          |                   |  with a mass one-thousandth that of the Sun, but     |\n' + \
+                '|           |          |                   |  two-and-a-half times that of all the other planets  |\n' + \
+                '|           |          |                   |  in the Solar System combined.                       |\n' + \
+                '|  Saturn   |  ♄       |  5.6851×10^26 kg  |  Saturn is the sixth planet from the Sun and the     |\n' + \
+                '|           |          |                   |  second-largest in the Solar System, after Jupiter.  |\n' + \
+                '|           |          |                   |  It is a gas giant with an average radius of about   |\n' + \
+                '|           |          |                   |  nine times that of Earth. It only has one-eighth    |\n' + \
+                '|           |          |                   |  the average density of Earth; however, with its     |\n' + \
+                '|           |          |                   |  larger volume, Saturn is over 95 times more         |\n' + \
+                '|           |          |                   |  massive.                                            |\n' + \
+                '|  Uranus   |  ⛢       |  8.6849×10^25 kg  |  Uranus is the seventh planet from the Sun. Its      |\n' + \
+                '|           |          |                   |  name is a reference to the Greek god of the sky,    |\n' + \
+                '|           |          |                   |  Uranus, who, according to Greek mythology, was the  |\n' + \
+                '|           |          |                   |  grandfather of Zeus (Jupiter) and father of Cronus  |\n' + \
+                '|           |          |                   |  (Saturn). It has the third-largest planetary        |\n' + \
+                '|           |          |                   |  radius and fourth-largest planetary mass in the     |\n' + \
+                '|           |          |                   |  Solar System.                                       |\n' + \
+                '|  Neptune  |  ♆       |  1.0244×10^26 kg  |  Neptune is the eighth and farthest-known Solar      |\n' + \
+                '|           |          |                   |  planet from the Sun. In the Solar System, it is     |\n' + \
+                '|           |          |                   |  the fourth-largest planet by diameter, the          |\n' + \
+                '|           |          |                   |  third-most-massive planet, and the densest giant    |\n' + \
+                '|           |          |                   |  planet. It is 17 times the mass of Earth, slightly  |\n' + \
+                '|           |          |                   |  more massive than its near-twin Uranus.             |\n' + \
+                '+-----------+----------+-------------------+------------------------------------------------------+\n'
+        self.assertEqual(
+                expected,
+                str(self.planet_tbl),
+                'breaking long column names and values to fifty characters')
+
 
     def test__value_too_long_policy(self):
         pass  # covered by test__value_max_len
@@ -463,7 +545,7 @@ class Layouts(TestCase):
         # all layout tests use the same data
         self.simple_tbl = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
         self.complex_tbl = NiceTable(col_names=['Name', None, 'Height\n(cm)', 'Weight\n(kg)'])
-        for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+        for pokemon in NiceTable.SAMPLE_POKEMON:
             self.simple_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
             self.complex_tbl.append([pokemon['name'], pokemon['type'], pokemon['height'], pokemon['weight']])
         self.complex_tbl.columns[1][1] = None
@@ -538,9 +620,9 @@ class DataManipulations(TestCase):
                          'passing a list of tuples correctly auto-generates column names')
 
     def test__constructor__data_only__list_of_dicts(self):
-        out1 = NiceTable(json.loads(NiceTable.SAMPLE_JSON))
+        out1 = NiceTable(NiceTable.SAMPLE_POKEMON)
         out2 = NiceTable(col_names=['id', 'name', 'type', 'height', 'weight'])
-        for row in json.loads(NiceTable.SAMPLE_JSON):
+        for row in NiceTable.SAMPLE_POKEMON:
             out2.append(row)
         self.assertEqual(str(out1),
                          str(out2),
@@ -594,7 +676,7 @@ class DataManipulations(TestCase):
     def test__append_dict(self):
         out1 = NiceTable(col_names=['name', 'What is this', 'height', 'weight'])
         out2 = NiceTable(col_names=['Name', 'Type', 'Height(cm)', 'Weight(kg)'])
-        for pokemon in json.loads(NiceTable.SAMPLE_JSON):
+        for pokemon in NiceTable.SAMPLE_POKEMON:
             out1.append(pokemon)
             out2.append(pokemon)
 
@@ -633,9 +715,9 @@ class DataManipulations(TestCase):
                          'initializing NiceTable with a list of lists is the same as appending each list in a loop')
 
     def test__constructor__col_names_and_data__list_of_dict(self):
-        out1 = NiceTable(json.loads(NiceTable.SAMPLE_JSON), col_names=['id', 'name', 'type', 'height', 'weight'])
+        out1 = NiceTable(NiceTable.SAMPLE_POKEMON, col_names=['id', 'name', 'type', 'height', 'weight'])
         out2 = NiceTable(col_names=['id', 'name', 'type', 'height', 'weight'])
-        for layout in json.loads(NiceTable.SAMPLE_JSON):
+        for layout in NiceTable.SAMPLE_POKEMON:
             out2.append(layout)
         self.assertEqual(str(out1),
                          str(out2),
@@ -657,7 +739,7 @@ class DataManipulations(TestCase):
                          'initializing NiceTable with a mixed list of dicts/tuples/lists works')
 
     def test__rename_columns(self):
-        out = NiceTable(data=json.loads(NiceTable.SAMPLE_JSON))
+        out = NiceTable(data=NiceTable.SAMPLE_POKEMON)
         with self.assertRaises(TypeError) as context:
             out.rename_columns('a')
         self.assertTrue(str(context.exception) == "NiceTable.rename_columns(): expecting a list, got <class 'str'>",

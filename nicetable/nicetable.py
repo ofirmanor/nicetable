@@ -1,3 +1,4 @@
+import json
 import numbers
 from typing import List, Union, Optional, Callable, Any, Tuple, Dict
 
@@ -26,7 +27,7 @@ class NiceTable:
     HEADER_ADJUST_OPTIONS = ['left', 'center', 'right', 'compact']
     COLUMN_ADJUST_OPTIONS = ['auto'] + HEADER_ADJUST_OPTIONS + ['strict_left', 'strict_center', 'strict_right']
     VALUE_ESCAPING_OPTIONS = ['remove', 'replace', 'prefix', 'ignore']
-    VALUE_TOO_LONG_POLICY = ['truncate', 'wrap']
+    VALUE_TOO_LONG_POLICY = ['truncate', 'wrap', 'break-word']
 
     FORMATTING_SETTINGS = [  # Name, Type, Default, Description
         ['header', 'bool', True, 'whether the table header will be printed'],
@@ -60,6 +61,19 @@ class NiceTable:
         '{"id": "025", "name":"Pikachu","type":"Electric","height":40,"weight":6.1},' + \
         '{"id": "150", "name":"Mewtwo","type":"Psychic","height":200,"weight":122}' + \
         ']'
+
+    SAMPLE_POKEMON = json.loads(SAMPLE_JSON)
+
+    SAMPLE_PLANETS = [
+            {'Name': 'Mercury', 'Symbol': '☿', 'Mass': '3.3011×10^23 kg', 'Description': 'Mercury is the smallest and closest planet to the sun in the Solar System. Its orbit around the Sun takes 87.97 Earth days, the shortest of all the planets in the Solar System. It is named after the Greek god Hermes (Ερμής), translated into Latin Mercurius Mercury, god of commerce, messenger of the gods, mediator between gods and mortals.'},
+            {'Name': 'Venus', 'Symbol': '♀', 'Mass': '4.8690×10^24 kg', 'Description': 'Venus is the second planet from the Sun. It is named after the Roman goddess of love and beauty. As the second-brightest natural object in Earth\'s night sky after the Moon, Venus can cast shadows and can be, on rare occasion, visible to the naked eye in broad daylight.'},
+            {'Name': 'Earth', 'Symbol': '♁', 'Mass': '5.972×10^24 kg', 'Description': 'Earth is the third planet from the Sun and the only astronomical object known to harbor life. About 29% of Earth\'s surface is land consisting of continents and islands. The remaining 71% is covered with water, mostly by oceans but also by lakes, rivers and other fresh water, which together constitute the hydrosphere.'},
+            {'Name': 'Mars', 'Symbol': '♂', 'Mass': '6.4191×10^23 kg', 'Description': 'Mars is the fourth planet from the Sun and the second-smallest planet in the Solar System, being larger than only Mercury. In English, Mars carries the name of the Roman god of war and is often referred to as the "Red Planet".'},
+            {'Name': 'Jupiter', 'Symbol': '♃', 'Mass': '1.8987×10^27 kg', 'Description': 'Jupiter is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass one-thousandth that of the Sun, but two-and-a-half times that of all the other planets in the Solar System combined.'},
+            {'Name': 'Saturn', 'Symbol': '♄', 'Mass': '5.6851×10^26 kg', 'Description': 'Saturn is the sixth planet from the Sun and the second-largest in the Solar System, after Jupiter. It is a gas giant with an average radius of about nine times that of Earth. It only has one-eighth the average density of Earth; however, with its larger volume, Saturn is over 95 times more massive.'},
+            {'Name': 'Uranus', 'Symbol': '⛢', 'Mass': '8.6849×10^25 kg', 'Description': 'Uranus is the seventh planet from the Sun. Its name is a reference to the Greek god of the sky, Uranus, who, according to Greek mythology, was the grandfather of Zeus (Jupiter) and father of Cronus (Saturn). It has the third-largest planetary radius and fourth-largest planetary mass in the Solar System.'},
+            {'Name': 'Neptune', 'Symbol': '♆', 'Mass': '1.0244×10^26 kg', 'Description': 'Neptune is the eighth and farthest-known Solar planet from the Sun. In the Solar System, it is the fourth-largest planet by diameter, the third-most-massive planet, and the densest giant planet. It is 17 times the mass of Earth, slightly more massive than its near-twin Uranus.'},
+            ]
 
     @classmethod
     def builtin_layouts(cls) -> List[List[str]]:
@@ -454,10 +468,42 @@ class NiceTable:
                 final_str_list.append(s)
             elif self.value_too_long_policy == 'truncate':
                 final_str_list.append(s[:max_len])
+            elif isinstance(processed_value, str) and self.value_too_long_policy == 'break-word':
+                final_str_list += self._break_word(s, max_len)
             else:  # wrap long value
                 final_str_list += [s[i:i+max_len] for i in range(0, len(s), max_len)]
         return final_str_list
 
+    def _break_word(self, s, max_len):
+        lines = []
+        words = s.split()
+        line = ""
+        for w in words:
+            if line == "":
+                proposed = w
+            else:
+                proposed = line + " " + w
+            if len(proposed) < max_len:
+                line = proposed
+            elif len(proposed) == max_len:
+                lines.append(proposed)
+                line = ""
+            elif len(proposed) > max_len:
+                if len(w) > max_len:
+                    while len(proposed) > max_len:
+                        lines.append(proposed[:max_len])
+                        proposed = proposed[max_len:]
+                    line = proposed
+                else:
+                    if line != "":
+                        lines.append(line)
+                    line = w
+
+        if line != "":
+            lines.append(line)
+
+        return lines
+    
     def _to_cell_str_list(self, value: Optional[Any], adjust: str, pos: int, is_header: bool) -> List[str]:
         """Get a string representation of a value (List[str] to support multi-line) and apply cell adjustment to it"""
         compact_number_required = adjust.startswith('strict') or adjust == 'compact'
